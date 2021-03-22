@@ -7,7 +7,7 @@ function CHeader(): JSX.Element {
         <AppBar position="static">
             <Toolbar>
                 <Typography variant="h6">
-                    News
+                    C Tour
                 </Typography>
             </Toolbar>
         </AppBar>
