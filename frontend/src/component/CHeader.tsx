@@ -1,14 +1,26 @@
 import React from "react";
-import {AppBar, Toolbar, Typography} from "@material-ui/core";
+import {AppBar, Button, Toolbar, Typography} from "@material-ui/core";
+import {useHistory} from "react-router-dom";
 
 function CHeader(): JSX.Element {
+    const history = useHistory();
+
+    function goIndex(e: React.MouseEvent<HTMLButtonElement>) {
+        e.preventDefault();
+        history.push('/');
+    }
 
     return (
         <AppBar position="static">
             <Toolbar>
-                <Typography variant="h6">
-                    C Tour
-                </Typography>
+                {/*<a>*/}
+
+                {/*</a>*/}
+                <Button onClick={goIndex} color="inherit">
+                    <Typography variant="h6">
+                        C Tour
+                    </Typography>
+                </Button>
             </Toolbar>
         </AppBar>
     )

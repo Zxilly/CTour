@@ -1,12 +1,14 @@
 import {Button, Container, Typography} from "@material-ui/core";
 import {makeStyles} from '@material-ui/core/styles';
+import {useHistory} from 'react-router-dom'
+import React from "react";
 
 const useStyles = makeStyles({
     indexTitle: {
         marginTop: "200px",
         textAlign: "center",
         fontWeight: "bold",
-        backgroundImage: "linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%, #FF0053 50%)",
+        backgroundImage: "linear-gradient(60deg, #00838F 60%, #0040FF 90%)",
         color: "transparent",
         WebkitBackgroundClip: "text"
     },
@@ -20,8 +22,12 @@ const useStyles = makeStyles({
 
 function Index(): JSX.Element {
     const classes = useStyles();
+    const history = useHistory();
 
-
+    function goCatalogue(e: React.MouseEvent<HTMLButtonElement>): void {
+        e.preventDefault();
+        history.push('/catalogue');
+    }
 
     return (
         <Container>
@@ -38,9 +44,9 @@ function Index(): JSX.Element {
                     disableElevation
                     style={{marginTop: "40px"}}
                     className={classes.content}
-                    onClick={}
+                    onClick={goCatalogue}
                 >
-                        访问目录
+                    访问目录
                 </Button>
             </p>
 
