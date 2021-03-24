@@ -24,7 +24,7 @@ function CPresentationButton(props: CPresentationButtonProps): JSX.Element {
     const section = props.section;
     const presentation = props.item[0];
 
-    history.push(`/${section}/${presentation}`);
+    history.push(`/playground/${section}/${presentation}`);
   };
 
   return (

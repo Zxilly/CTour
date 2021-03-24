@@ -8,7 +8,7 @@ const useStyles = makeStyles({
         marginTop: "200px",
         textAlign: "center",
         fontWeight: "bold",
-        backgroundImage: "linear-gradient(60deg, #00838F 60%, #0040FF 90%)",
+        backgroundImage: "linear-gradient(45deg, #00838F 40%, #0040FF 90%)",
         color: "transparent",
         WebkitBackgroundClip: "text"
     },

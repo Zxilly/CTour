@@ -1,4 +1,17 @@
-const list = {
+interface list {
+    [k: string]: {
+        name: string,
+        description: string,
+        content: {
+            [k: string]: {
+                title: string,
+                hasCode: boolean
+            }
+        }
+    }
+}
+
+const infoList:list = {
   welcome: {
     name: "欢迎",
     description: "学习使用本指南：包括如何在不同的课程间切换以及运行代码。",
@@ -19,4 +32,4 @@ const list = {
   },
 };
 
-export default list
+export default infoList
