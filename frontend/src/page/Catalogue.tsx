@@ -7,7 +7,7 @@ import MuiAccordion from "@material-ui/core/Accordion";
 import MuiAccordionSummary from "@material-ui/core/AccordionSummary";
 import MuiAccordionDetails from "@material-ui/core/AccordionDetails";
 import infoList from "../list";
-import COnePresentationButton from "../component/COnePresentation";
+import CPresentationButton from "../component/CPresentationButton";
 
 const useStyles = makeStyles({
   container: {
@@ -19,7 +19,7 @@ const useStyles = makeStyles({
     fontWeight: "bold",
   },
   bigTitle: {
-    marginTop: "32px",
+    marginTop: "56px",
     marginBottom: "32px",
   },
   sectionTitle: {
@@ -47,7 +47,7 @@ function Catalogue(): JSX.Element {
 
   const welcomeChildren = Object.entries(
     infoList.welcome.content
-  ).map((presentationItem) => <COnePresentationButton section="welcome" item={presentationItem} key={presentationItem[0]}/>);
+  ).map((presentationItem) => <CPresentationButton section="welcome" item={presentationItem} key={presentationItem[0]}/>);
 
   return (
     <Container className={classes.container}>
@@ -65,7 +65,7 @@ function Catalogue(): JSX.Element {
       </p>
 
       <Accordion>
-        <AccordionSummary aria-controls="panel1a-content" id="panel1a-header">
+        <AccordionSummary>
           <Box>
             <Typography variant={"h6"} className={classes.sectionTitle}>
               {infoList.welcome.name}
