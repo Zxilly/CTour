@@ -1,24 +1,9 @@
 import {Button, Container, Typography} from "@material-ui/core";
-import {makeStyles} from '@material-ui/core/styles';
 import {useHistory} from 'react-router-dom'
 import React from "react";
 
-const useStyles = makeStyles({
-    indexTitle: {
-        marginTop: "200px",
-        textAlign: "center",
-        fontWeight: "bold",
-        backgroundImage: "linear-gradient(45deg, #00838F 40%, #0040FF 90%)",
-        color: "transparent",
-        WebkitBackgroundClip: "text"
-    },
-    content: {
-        textAlign: "center",
-        marginRight: "auto",
-        marginLeft: "auto",
-        display: "block"
-    }
-})
+import useStyles from "../util/style";
+
 
 function Index(): JSX.Element {
     const classes = useStyles();

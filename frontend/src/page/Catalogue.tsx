@@ -1,35 +1,14 @@
 import { Box, Container, Divider, Typography } from "@material-ui/core";
 import React from "react";
-import { makeStyles } from "@material-ui/core/styles";
 import "./Catalogue.css";
 import { withStyles } from "@material-ui/styles";
 import MuiAccordion from "@material-ui/core/Accordion";
 import MuiAccordionSummary from "@material-ui/core/AccordionSummary";
 import MuiAccordionDetails from "@material-ui/core/AccordionDetails";
-import infoList from "../list";
 import CPresentationButton from "../component/CPresentationButton";
 
-const useStyles = makeStyles({
-  container: {
-    margin: "24px auto 36px auto",
-    maxWidth: "800px",
-    width: "90%",
-  },
-  boldFont: {
-    fontWeight: "bold",
-  },
-  bigTitle: {
-    marginTop: "56px",
-    marginBottom: "32px",
-  },
-  sectionTitle: {
-    marginTop: "16px",
-    fontWeight: "bold",
-  },
-  divider: {
-    marginBottom: "16px",
-  }
-});
+import infoList from "../list";
+import useStyles from "../util/style";
 
 const Accordion = withStyles({
   root: {
@@ -50,7 +29,7 @@ function Catalogue(): JSX.Element {
   ).map((presentationItem) => <CPresentationButton section="welcome" item={presentationItem} key={presentationItem[0]}/>);
 
   return (
-    <Container className={classes.container}>
+    <Container className={classes.indexContainer}>
       <Typography
         variant={"h3"}
         className={[classes.boldFont, classes.bigTitle].join(" ")}

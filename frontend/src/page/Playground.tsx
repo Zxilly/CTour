@@ -1,9 +1,9 @@
 import infoList from "../list";
 import "./PlayGround.css";
+import useStyles from "../util/style";
 
 import { Redirect, useParams } from "react-router-dom";
-import { Box, Container, Grid, Paper, Typography } from "@material-ui/core";
-import { makeStyles } from "@material-ui/styles";
+import { Box, Grid, Paper, Typography } from "@material-ui/core";
 import { useEffect, useState } from "react";
 
 import AceEditor from "react-ace";
@@ -19,64 +19,17 @@ interface PlaygroundRouteParams {
   content: string;
 }
 
-const useStyle = makeStyles({
-  container: {
-    position: "absolute",
-    top: "64px",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    overflow: "auto",
-    paddingRight: "16px",
-    paddingLeft: "16px",
-  },
-  divideBox: {
-    height: "100%",
-    paddingTop: 0,
-  },
-  cardBox0: {
-    height: "100%",
-    width: "100%",
-    paddingTop: "16px",
-    paddingBottom: "16px",
-  },
-  cardBox1: {
-    height: "70%",
-    width: "100%",
-    paddingTop: "16px",
-    paddingBottom: "8px",
-  },
-  cardBox2: {
-    height: "30%",
-    width: "100%",
-    paddingTop: "8px",
-    paddingBottom: "16px",
-  },
-  paper: {
-    height: "100%",
-    width: "100%",
-  },
-  scroll: {
-    overflow: "auto",
-  },
-});
-
-/*function useCode(section: string, content: string): string {
-  const path = `../code/${section}/${content}.c`;
-  const code = require(path);
-  console.log(code);
-  return "233";
-}*/
-
 function Playground(): JSX.Element {
   const { section, content } = useParams<PlaygroundRouteParams>();
-  const classes = useStyle();
+
+  const classes = useStyles();
+
   const [code, setCode] = useState("");
   const [article, setArticle] = useState("");
+  const [output, setOutput] = useState("");
 
   useEffect(() => {
     import(`!!raw-loader!../code/${section}/${content}.c`).then((code) => {
-      // console.log(code.default);
       setCode(code.default);
     });
     import(`!!raw-loader!../document/${section}/${content}.md`).then(
@@ -117,11 +70,12 @@ function Playground(): JSX.Element {
                 style={{
                   width: "100%",
                   height: "100%",
+                  fontFamily: "'Consolas', sans-serif",
                 }}
                 mode="c_cpp"
                 theme="github"
                 name="editor"
-                fontSize={14}
+                fontSize={16}
                 showPrintMargin={true}
                 showGutter={true}
                 highlightActiveLine={true}
@@ -138,7 +92,7 @@ function Playground(): JSX.Element {
           </Box>
           <Box className={classes.cardBox2}>
             <Paper className={classes.paper} elevation={2}>
-              test
+              {output}
             </Paper>
           </Box>
         </Grid>
