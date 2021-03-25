@@ -11,6 +11,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.post('/compile')
-def compile():
-    
+def emcc_compile():
+    return 0

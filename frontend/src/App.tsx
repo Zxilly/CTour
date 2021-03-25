@@ -11,6 +11,7 @@ import Index from "./page/Index";
 import CHeader from "./component/CHeader";
 import Catalogue from "./page/Catalogue";
 import {createMuiTheme, ThemeProvider} from '@material-ui/core/styles';
+import Playground from "./page/Playground";
 
 const theme = createMuiTheme({
     palette: {
@@ -30,11 +31,17 @@ function App() {
                 <CssBaseline/>
                 <CHeader/>
                 <Switch>
-                    <Route path="/catalogue">
+                    <Route exact path="/catalogue">
                         <Catalogue/>
                     </Route>
-                    <Route path="/">
+                    <Route exact path="/">
                         <Index/>
+                    </Route>
+                    <Route path="/playground/:section/:content">
+                        <Playground/>
+                    </Route>
+                    <Route path="*">
+
                     </Route>
                 </Switch>
             </Router>
