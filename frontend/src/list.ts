@@ -1,17 +1,17 @@
 interface list {
-    [k: string]: {
-        name: string,
-        description: string,
-        content: {
-            [k: string]: {
-                title: string,
-                hasCode: boolean
-            }
-        }
-    }
+  [k: string]: {
+    name: string;
+    description: string;
+    content: {
+      [k: string]: {
+        title: string;
+        hasCode: boolean;
+      };
+    };
+  };
 }
 
-const infoList:list = {
+const infoList: list = {
   welcome: {
     name: "欢迎",
     description: "学习使用本指南：包括如何在不同的课程间切换以及运行代码。",
@@ -30,6 +30,16 @@ const infoList:list = {
       },
     },
   },
+  basic: {
+    name: "基础",
+    description: "这里是基础",
+    content: {
+      variable: {
+        title: "变量",
+        hasCode: true,
+      },
+    },
+  },
 };
 
-export default infoList
+export default infoList;
