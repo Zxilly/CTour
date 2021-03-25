@@ -27,6 +27,8 @@ const useStyle = makeStyles({
     left: 0,
     right: 0,
     overflow: "auto",
+    paddingRight: "16px",
+    paddingLeft: "16px",
   },
   divideBox: {
     height: "100%",
@@ -53,6 +55,9 @@ const useStyle = makeStyles({
   paper: {
     height: "100%",
     width: "100%",
+  },
+  scroll: {
+    overflow: "auto",
   },
 });
 
@@ -85,12 +90,12 @@ function Playground(): JSX.Element {
     return <Redirect to="/404" />;
   }
   return (
-    <Container className={classes.container}>
+    <Box className={classes.container}>
       <Grid container spacing={2} className={classes.divideBox}>
         <Grid item xs={6} className={classes.divideBox}>
           <Box className={classes.cardBox0}>
             <Paper
-              className={classes.paper}
+              className={[classes.paper, classes.scroll].join(" ")}
               elevation={2}
               style={{ padding: "16px" }}
             >
@@ -138,7 +143,7 @@ function Playground(): JSX.Element {
           </Box>
         </Grid>
       </Grid>
-    </Container>
+    </Box>
   );
 }
 
