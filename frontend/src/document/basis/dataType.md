@@ -1,6 +1,6 @@
 C语言中提供了多种基本数据类型：
 	
-int\short int\long int\long long int
+[int|short int|long int|long long int]
 	整型(int)：这种类型中存储的数值都是只保留整数部分的数值
 	长整型(long int)：整型的plus版本，可以存放更大的数值
 	短整型（short int):整型的mini版本，存放的数值比整型更小
