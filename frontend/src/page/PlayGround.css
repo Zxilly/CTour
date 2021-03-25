@@ -1,0 +1,10 @@
+code {
+    padding: 2px;
+}
+
+pre, code {
+    font-family: 'Consolas', sans-serif;
+    border-radius: 4px;
+    color: #333;
+    background-color: #fafafa;
+}
