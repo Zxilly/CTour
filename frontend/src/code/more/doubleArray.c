@@ -1,4 +1,4 @@
-#include<stdio.h>
+#include <stdio.h>
 int main(void){
     //分段赋值
     int a[3][4] = 

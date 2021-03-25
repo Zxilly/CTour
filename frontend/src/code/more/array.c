@@ -1,4 +1,4 @@
-#include<stdio.h>
+#include <stdio.h>
 int main(void){
     int a[] = {1,2,3,4};
     int b[10] = {1,2,3,4,5};

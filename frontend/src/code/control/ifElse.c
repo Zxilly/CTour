@@ -1,4 +1,4 @@
-#include<stdio.h>
+#include <stdio.h>
 int main(void){
     int i = 9;
     if( i > 6 ){		//满足条件，进入代码块内

@@ -1,4 +1,4 @@
-#include<stdio.h> 
+#include <stdio.h> 
 //结构体类型的定义
 struct abc{
 	char name[50];
