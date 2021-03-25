@@ -9,6 +9,6 @@ int main(void){
         printf("if条件不满足，不能执行此行语句");
     }
     
-    pritnf("%d\n" , i>6);	//输出1
-    pritnf("%d\n" , i>99);	//输出0
+    printf("%d\n" , i>6);	//输出1
+    printf("%d\n" , i>99);	//输出0
 }
