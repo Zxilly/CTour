@@ -2,7 +2,8 @@ import React from 'react';
 import {
     BrowserRouter as Router,
     Switch,
-    Route
+    Route,
+    Redirect
 } from "react-router-dom";
 import './App.css'
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -12,6 +13,8 @@ import CHeader from "./component/CHeader";
 import Catalogue from "./page/Catalogue";
 import {createMuiTheme, ThemeProvider} from '@material-ui/core/styles';
 import Playground from "./page/Playground";
+
+export const apiUrl = "http://localhost:8000"
 
 const theme = createMuiTheme({
     palette: {
@@ -40,8 +43,11 @@ function App() {
                     <Route path="/playground/:section/:content">
                         <Playground/>
                     </Route>
-                    <Route path="*">
+                    <Route path="/404">
 
+                    </Route>
+                    <Route path="*">
+                        <Redirect to="/404"/>
                     </Route>
                 </Switch>
             </Router>

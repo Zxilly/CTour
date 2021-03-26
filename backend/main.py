@@ -5,6 +5,8 @@ import string
 import uvicorn
 from fastapi import FastAPI, Path, Body
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException
+from starlette.responses import Response
 
 app = FastAPI()
 
@@ -20,11 +22,11 @@ emcc = '/mnt/e/Project/CS_Project/2021/CTour/emsdk/upstream/emscripten/emcc'
 
 
 @app.post('/compile')
-def emcc_compile(
+async def emcc_compile(
         code: str = Body(..., embed=True)
 ):
-    random_name = "".join(random.sample(string.ascii_letters + string.digits, 8))
-    print(random_name)
+    random_name = "".join(random.sample(string.digits, 16))
+    # print(random_name)
     file_path = f'/tmp/{random_name}.c'
     output_path = f'/tmp/{random_name}.js'
 
@@ -38,11 +40,31 @@ def emcc_compile(
     return {"success": success, "wasmId": random_name}
 
 
-@app.get('/compiled/{wasmId}')
-def emcc_compiled(wasmId: int = Path(...)):
-    out_js = f'/tmp/{wasmId}.js'
-    out_wasm = f'/tmp/{wasmId}.wasm'
-    with open()
+mime_type = {
+    'js': 'application/javascript',
+    'wasm': 'application/wasm'
+}
+
+
+@app.get('/compiled/{wasm_id}.{file_type}')
+async def emcc_compiled(
+        wasm_id: int = Path(...),
+        file_type: str = Path(...)
+):
+    if file_type not in ['js', 'wasm']:
+        raise HTTPException(400, 'Type Error.')
+
+    if len(str(wasm_id)) != 16:
+        raise HTTPException(400, 'Length not meet.')
+
+    out = f'/tmp/{wasm_id}.{file_type}'
+    try:
+        with open(out, 'r+') as f:
+            content = f.read()
+    except FileNotFoundError:
+        raise HTTPException(404, 'Not Found')
+
+    return Response(content=content, media_type=mime_type[file_type])
 
 
 if __name__ == '__main__':

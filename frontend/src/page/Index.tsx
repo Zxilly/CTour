@@ -34,8 +34,6 @@ function Index(): JSX.Element {
                     访问目录
                 </Button>
             </p>
-
-
         </Container>
     )
 }
