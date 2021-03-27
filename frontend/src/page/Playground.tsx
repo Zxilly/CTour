@@ -2,9 +2,9 @@ import infoList from "../list";
 import "./PlayGround.css";
 import useStyles from "../util/style";
 
-import { Redirect, useParams } from "react-router-dom";
-import { Box, Grid, Paper, Typography } from "@material-ui/core";
-import { useEffect, useState } from "react";
+import { Redirect, Link, useParams } from "react-router-dom";
+import { Box, Button, Grid, Paper, Typography } from "@material-ui/core";
+import React, { useEffect, useState } from "react";
 
 import AceEditor from "react-ace";
 import "ace-builds/webpack-resolver";
@@ -13,11 +13,31 @@ import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 import Markdown from "markdown-to-jsx";
+import { previousContent, nextContent } from "../util/contentHandler";
+import axios from "axios";
+import { apiUrl } from "../App";
 
 interface PlaygroundRouteParams {
   section: string;
   content: string;
 }
+
+const loadDynamicScript = (url: string, callback?: any) => {
+  const existingScript = document.getElementById("userProgram");
+
+  if (existingScript) {
+    existingScript.remove();
+  }
+
+  const script = document.createElement("script");
+  script.src = url;
+  script.id = "userProgram";
+  document.body.appendChild(script);
+
+  script.onload = () => {
+    if (callback) callback();
+  };
+};
 
 function Playground(): JSX.Element {
   const { section, content } = useParams<PlaygroundRouteParams>();
@@ -28,15 +48,58 @@ function Playground(): JSX.Element {
   const [article, setArticle] = useState("");
   const [output, setOutput] = useState("");
 
+  const getPath = (callback: any) => {
+    const result = callback(section, content);
+    if (result[2]) {
+      return "/catalogue";
+    } else {
+      return `/playground/${result[0]}/${result[1]}`;
+    }
+  };
+
+  const hookConsole = (output:CallableFunction) => {
+    console.log = (data: any) => {
+      output(data);
+      if (typeof data === "string") {
+        setOutput((prevContent) => prevContent + data);
+      }
+    };
+  };
+
+  const runCode = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    setOutput("");
+
+    axios
+      .post(apiUrl + "/compile", {
+        code: code,
+      })
+      .then((resp) => {
+        if (resp.data.success) {
+          const output = console.log;
+          hookConsole(output)
+          const jsUrl = apiUrl+`/compiled/${resp.data.wasm_id}.js`
+          loadDynamicScript(jsUrl)
+        } else {
+          //TODO: 编译错误提示
+        }
+      });
+  };
+
   useEffect(() => {
-    import(`!!raw-loader!../code/${section}/${content}.c`).then((code) => {
-      setCode(code.default);
-    });
     import(`!!raw-loader!../document/${section}/${content}.md`).then(
       (article) => {
         setArticle(article.default);
       }
     );
+    if (infoList[section].content[content].hasCode) {
+      import(`!!raw-loader!../code/${section}/${content}.c`).then((code) => {
+        setCode(code.default);
+      });
+    } else {
+      setCode("");
+    }
   }, [content, section]);
 
   if (!(section in infoList) || !(content in infoList[section].content)) {
@@ -57,6 +120,35 @@ function Playground(): JSX.Element {
               </Typography>
               <Markdown options={{ wrapper: "article" }}>{article}</Markdown>
             </Paper>
+          </Box>
+          <Box className={classes.buttonBar}>
+            <Button
+              variant="outlined"
+              color="primary"
+              disableElevation
+              component={Link}
+              to={getPath(previousContent)}
+            >
+              上一页
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              disableElevation
+              component={Link}
+              to="/catalogue"
+            >
+              目录
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              disableElevation
+              component={Link}
+              to={getPath(nextContent)}
+            >
+              下一页
+            </Button>
           </Box>
         </Grid>
         <Grid item xs={6} className={classes.divideBox}>
@@ -89,6 +181,19 @@ function Playground(): JSX.Element {
                 }}
               />
             </Paper>
+          </Box>
+          <Box className={classes.submitButton}>
+            <Button
+              variant="contained"
+              color="primary"
+              style={{
+                float: "right",
+                marginRight: "16px",
+              }}
+              onClick={runCode}
+            >
+              运行
+            </Button>
           </Box>
           <Box className={classes.cardBox2}>
             <Paper className={classes.paper} elevation={2}>

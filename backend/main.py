@@ -1,6 +1,5 @@
 import os
-import random
-import string
+import uuid
 
 import uvicorn
 from fastapi import FastAPI, Path, Body
@@ -25,7 +24,7 @@ emcc = '/mnt/e/Project/CS_Project/2021/CTour/emsdk/upstream/emscripten/emcc'
 async def emcc_compile(
         code: str = Body(..., embed=True)
 ):
-    random_name = "".join(random.sample(string.digits, 16))
+    random_name = str(uuid.uuid4().int >> 64)[0:16]
     # print(random_name)
     file_path = f'/tmp/{random_name}.c'
     output_path = f'/tmp/{random_name}.js'
@@ -34,15 +33,20 @@ async def emcc_compile(
         f.write(code)
 
     result = os.system(
-        f'{emcc} {file_path} -s WASM=1 -O2 -o {output_path}')
+        f'{emcc} {file_path} -s WASM=1 -s EXIT_RUNTIME=1 -o {output_path}')
     success = True if result == 0 else False
 
-    return {"success": success, "wasmId": random_name}
+    return {"success": success, "wasm_id": random_name}
 
 
 mime_type = {
     'js': 'application/javascript',
     'wasm': 'application/wasm'
+}
+
+read_type = {
+    'js': 'r+',
+    'wasm': 'rb'
 }
 
 
@@ -58,8 +62,9 @@ async def emcc_compiled(
         raise HTTPException(400, 'Length not meet.')
 
     out = f'/tmp/{wasm_id}.{file_type}'
+
     try:
-        with open(out, 'r+') as f:
+        with open(out, read_type[file_type]) as f:
             content = f.read()
     except FileNotFoundError:
         raise HTTPException(404, 'Not Found')
