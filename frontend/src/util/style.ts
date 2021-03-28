@@ -1,6 +1,19 @@
 import { makeStyles } from "@material-ui/styles";
 
 const useStyles = makeStyles({
+  submitButton: {
+    paddingLeft: "16px",
+    position: "relative",
+    top: "-56px"
+  },
+  buttonBar: {
+    paddingLeft: "16px",
+    paddingRight: "16px",
+    position: "relative",
+    top: "-56px",
+    display: "flex",
+    justifyContent: "space-around",
+  },
   catalogueBox: {
     margin: "32px 0",
   },

@@ -8,7 +8,7 @@ function indexContent(section: string, content: string) {
   const contents = infoList[section];
 
   if (!contents) {
-    throw "Section not exist.";
+    throw new Error("Section not exist.");
   } else {
     return Object.keys(contents.content).indexOf(content);
   }
@@ -21,6 +21,10 @@ function getSection(sectionIndex: number) {
 function getContent(sectionIndex: number, contentIndex: number) {
   const key = getSection(sectionIndex);
   return Object.keys(infoList[key].content)[contentIndex];
+}
+
+function getContentLength(section: string) {
+  return Object.keys(infoList[section].content).length;
 }
 
 function nextContent(section: string, content: string) {
@@ -52,20 +56,9 @@ function nextContent(section: string, content: string) {
   ];
 }
 
-function getSectionLength() {
-  return Object.keys(infoList).length;
-}
-
-function getContentLength(section: string) {
-  return Object.keys(infoList[section].content).length;
-}
-
 function previousContent(section: string, content: string) {
   const sectionLoc = indexSection(section);
   const contentLoc = indexContent(section, content);
-
-  const sectionNum = getSectionLength();
-  const contentNum = getContentLength(section);
 
   let returnFlag = false;
 
@@ -91,3 +84,5 @@ function previousContent(section: string, content: string) {
     returnFlag,
   ];
 }
+
+export { nextContent, previousContent };
