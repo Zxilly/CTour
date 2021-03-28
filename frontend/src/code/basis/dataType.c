@@ -1,4 +1,4 @@
-#include<stdio.h>
+#include <stdio.h>
 int main(void){
     int i = 123;
     double ii = 123.4;

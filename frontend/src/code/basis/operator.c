@@ -5,20 +5,20 @@ int main(){
    int c ;
  
    c = a + b;
-   printf("Line 1 - c µÄÖµÊÇ %d\n", c );
+   printf("Line 1 - c çš„å€¼æ˜¯ %d\n", c );
    c = a - b;
-   printf("Line 2 - c µÄÖµÊÇ %d\n", c );
+   printf("Line 2 - c çš„å€¼æ˜¯ %d\n", c );
    c = a * b;
-   printf("Line 3 - c µÄÖµÊÇ %d\n", c );
+   printf("Line 3 - c çš„å€¼æ˜¯ %d\n", c );
    c = a / b;
-   printf("Line 4 - c µÄÖµÊÇ %d\n", c );
+   printf("Line 4 - c çš„å€¼æ˜¯ %d\n", c );
    c = a % b;
-   printf("Line 5 - c µÄÖµÊÇ %d\n", c );
-   c = a++;  // ¸³ÖµºóÔÙ¼Ó 1 £¬c Îª 21£¬a Îª 22
-   printf("Line 6 - c µÄÖµÊÇ %d\n", c );
-   c = a--;  // ¸³ÖµºóÔÙ¼õ 1 £¬c Îª 22 £¬a Îª 21
-   printf("Line 7 - c µÄÖµÊÇ %d\n", c );
+   printf("Line 5 - c çš„å€¼æ˜¯ %d\n", c );
+   c = a++;  // èµ‹å€¼åŽå†åŠ  1 ï¼Œc ä¸º 21ï¼Œa ä¸º 22
+   printf("Line 6 - c çš„å€¼æ˜¯ %d\n", c );
+   c = a--;  // èµ‹å€¼åŽå†å‡ 1 ï¼Œc ä¸º 22 ï¼Œa ä¸º 21
+   printf("Line 7 - c çš„å€¼æ˜¯ %d\n", c );
    
-   printf("Line 8 a == b µÄÖµÊÇ %d\n",a==b);
-   printf("Line 8 a > b µÄÖµÊÇ %d\n",a>b);
+   printf("Line 8 a == b çš„å€¼æ˜¯ %d\n",a==b);
+   printf("Line 8 a > b çš„å€¼æ˜¯ %d\n",a>b);
 }
