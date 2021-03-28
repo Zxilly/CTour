@@ -1,4 +1,4 @@
-C语言中有三种循环语句：`while` | `do-while` | `for`
+C 语言中有三种循环语句：`while` | `do-while` | `for`
 
 
 
