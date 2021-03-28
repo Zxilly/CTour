@@ -17,4 +17,5 @@ int main(void){
     while( k < 10){
     	printf("%d\t",c[k++]);
 	}
+	printf("\n") ;
 }
