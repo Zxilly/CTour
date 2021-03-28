@@ -15,6 +15,7 @@ int main()
     for(int i = 0 ;i <13 ;i++){
 		printf("%c",c3[i]);		//而通过遍历数组的方式就可以将所有数值全部输出
 	}
+	printf("\n") ;
 	return 0;
 }
 
