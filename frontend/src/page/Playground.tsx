@@ -1,15 +1,15 @@
 import infoList from "../list";
 import "./PlayGround.css";
 import useStyles from "../util/style";
+import runWASI from "../wasi";
+import { apiUrl } from "../App";
+import { previousContent, nextContent } from "../util/contentHandler";
 
 import { Redirect, Link, useParams } from "react-router-dom";
 import { Box, Button, Grid, Paper, Typography } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
 
-import _ from "lodash";
-
 // import initWASM from "../wasm";
-import runWASI from "../wasi";
 
 import AceEditor from "react-ace";
 import "ace-builds/webpack-resolver";
@@ -17,10 +17,12 @@ import "ace-builds/src-noconflict/mode-c_cpp";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
 
+import { Terminal } from "xterm";
+import "xterm/css/xterm.css";
+
 import Markdown from "markdown-to-jsx";
-import { previousContent, nextContent } from "../util/contentHandler";
+import _ from "lodash";
 import axios from "axios";
-import { apiUrl } from "../App";
 
 interface PlaygroundRouteParams {
   section: string;
@@ -34,7 +36,7 @@ function Playground(): JSX.Element {
 
   const [code, setCode] = useState("");
   const [article, setArticle] = useState("");
-  const [output, setOutput] = useState("");
+  const [terminal, setTerminal] = useState("");
 
   const getPath = (callback: any) => {
     const result = callback(section, content);
@@ -45,15 +47,43 @@ function Playground(): JSX.Element {
     }
   };
 
-  const outputAppend = (s: number) => {
-    const letter = String.fromCharCode(s);
-    setOutput((prevState) => prevState + letter);
+  const readFunc = (
+    buf: Buffer | Uint8Array,
+    off?: number,
+    len?: number,
+    pos?: number
+  ): number => {
+    return 0;
+  };
+
+  const writeFunc = (
+    buf: Buffer,
+    off?: number,
+    len?: number,
+    pos?: number
+  ): number => {
+    if (!off) {
+      off = 0;
+    }
+    if (!len) {
+      len = buf.length;
+    }
+
+    console.log(buf, off, len, pos);
+
+    let tempStr = "";
+    for (let i = off; i < len; i++) {
+      tempStr += String.fromCharCode(buf[i]);
+    }
+    console.log(tempStr);
+    setTerminal((prevState) => prevState + tempStr);
+    return len;
   };
 
   const runCode = _.throttle((e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
-    setOutput("");
+    setTerminal("");
 
     axios
       .post(apiUrl + "/compile", {
@@ -62,16 +92,14 @@ function Playground(): JSX.Element {
       .then((resp) => {
         if (resp.data.success) {
           const wasmUrl = apiUrl + `/compiled/${resp.data.wasm_id}.wasm`;
-          // loadDynamicScript(jsUrl);
-          // initWASM(wasmUrl, null, outputAppend, null);
-          runWASI(wasmUrl);
+          runWASI(wasmUrl, readFunc, writeFunc);
         } else {
           //TODO: 编译错误提示
         }
       });
   }, 1000);
 
-  const onChange = (newCode: string) => {
+  const onEditorChange = (newCode: string) => {
     setCode(newCode);
   };
 
@@ -88,6 +116,10 @@ function Playground(): JSX.Element {
     } else {
       setCode("");
     }
+
+    var term = new Terminal();
+    term.open(document.getElementById("terminal") as HTMLElement);
+    term.write("Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ");
   }, [content, section]);
 
   if (!(section in infoList) || !(content in infoList[section].content)) {
@@ -160,6 +192,7 @@ function Playground(): JSX.Element {
                 showGutter={true}
                 highlightActiveLine={true}
                 value={code}
+                debounceChangePeriod={200}
                 setOptions={{
                   enableBasicAutocompletion: true,
                   enableLiveAutocompletion: true,
@@ -167,26 +200,38 @@ function Playground(): JSX.Element {
                   showLineNumbers: true,
                   tabSize: 2,
                 }}
-                onChange={onChange}
+                onChange={onEditorChange}
               />
             </Paper>
-          </Box>
-          <Box className={classes.submitButton}>
-            <Button
-              variant="contained"
-              color="primary"
-              style={{
-                float: "right",
-                marginRight: "16px",
-              }}
-              onClick={runCode}
-            >
-              运行
-            </Button>
+            <Box className={classes.submitButton}>
+              <Button
+                variant="contained"
+                color="primary"
+                style={{
+                  float: "right",
+                  marginRight: "16px",
+                }}
+                onClick={runCode}
+              >
+                运行
+              </Button>
+            </Box>
           </Box>
           <Box className={classes.cardBox2}>
-            <Paper className={classes.paper} elevation={2}>
-              {output}
+            <Paper
+              className={classes.paper}
+              elevation={2}
+              style={{ borderRadius: 0 }}
+            >
+              <Box
+                id="terminal"
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  padding: "8px",
+                  backgroundColor: "rgb(0, 0, 0)",
+                }}
+              />
             </Paper>
           </Box>
         </Grid>

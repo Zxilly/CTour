@@ -4,7 +4,7 @@ const useStyles = makeStyles({
   submitButton: {
     paddingLeft: "16px",
     position: "relative",
-    top: "-56px"
+    top: "-56px",
   },
   buttonBar: {
     paddingLeft: "16px",

@@ -1,11 +1,16 @@
-/* eslint-disable */
-
 import { WASI } from "@wasmer/wasi";
 import browserBindings from "@wasmer/wasi/lib/bindings/browser";
 import { WasmFs } from "@wasmer/wasmfs";
-import { lowerI64Imports } from "@wasmer/wasm-transformer";
 
-function runWASI(url) {
+interface readFuncType {
+  (buf: Buffer | Uint8Array, off?: number, len?: number, pos?: number): number
+}
+
+interface writeFuncType {
+  (buf: Buffer, off?: number, len?: number, pos?: number): number
+}
+
+function runWASI(url: string,readFunc:readFuncType,writeFunc:writeFuncType) {
   // The file path to the wasi module we want to run
   const wasmFilePath = url;
 
@@ -15,7 +20,7 @@ function runWASI(url) {
      Inspired by: https://github.com/chalk/ansi-regex/blob/master/index.js
      MIT License Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
      */
-  const cleanStdout = (stdout) => {
+  /*const cleanStdout = (stdout: string) => {
     const pattern = [
       "[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)",
       "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))",
@@ -23,7 +28,7 @@ function runWASI(url) {
 
     const regexPattern = new RegExp(pattern, "g");
     return stdout.replace(regexPattern, "");
-  };
+  };*/
 
   // Instantiate a new WASI and WasmFs Instance
   // NOTE: For node WasmFs is not needed, and the native Fs module is assigned by default
@@ -51,9 +56,14 @@ function runWASI(url) {
   // https://github.com/streamich/memfs/blob/master/src/volume.ts#L1020
   // NOTE: This function MUST BE SYNCHRONOUS,
   // per the C api. Otherwise, the Wasi module will error.
-  let readStdinCounter = 0;
+  // let readStdinCounter = 0;
   // Assign all reads to fd 0 (in this case, /dev/stdin) to our custom function
-  wasmFs.volume.fds[0].node.read = (
+  wasmFs.volume.fds[0].node.read = readFunc // 这个是读 stdin 的
+  wasmFs.volume.fds[1].node.write = writeFunc // 这个是写 stdout 的
+
+
+
+  /*wasmFs.volume.fds[0].node.read = (
     stdinBuffer, // Uint8Array of the buffer that is sent to the guest Wasm module's standard input
     offset, // offset for the standard input
     length, // length of the standard input
@@ -72,16 +82,10 @@ function runWASI(url) {
     // and Shared Array Buffer. And use prompt as a fallback
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer
     // https://github.com/wasmerio/wasmer-js/blob/master/packages/wasm-terminal/src/process/process.ts#L174
-    let responseStdin = prompt(`Input\n`);
+    let responseStdin = (`Input\n`);
 
     // When the user cancels, throw an error to get out of the standard input read loop
     // From the guest Wasm modules (quickjs)
-    if (responseStdin === null) {
-      const userError = new Error("Process killed by Prompt Cancellation");
-      userError.user = true;
-      throw userError;
-      return -1;
-    }
     responseStdin += "\n";
 
     // Encode the string into bytes to be placed into the buffer for standard input
@@ -92,7 +96,7 @@ function runWASI(url) {
 
     // Return the current stdin, per the C API
     return buffer.length;
-  };
+  };*/
 
   // Async Function to run our wasi module/instance
   const startWasiTask = async () => {
@@ -106,7 +110,7 @@ function runWASI(url) {
     // in function calls like:
     // https://github.com/WebAssembly/WASI/blob/master/phases/old/snapshot_0/docs/wasi_unstable.md#clock_time_get
     // Allowing the Wasi module to work in the browser / node!
-    const loweredWasmBytes = await lowerI64Imports(wasmBytes);
+    // const loweredWasmBytes = await lowerI64Imports(wasmBytes);
 
     // Instantiate the WebAssembly file
     let wasmModule = await WebAssembly.compile(wasmBytes);
@@ -115,21 +119,20 @@ function runWASI(url) {
     });
 
     // Start the WebAssembly WASI instance!
-    // try {
-    wasi.start(instance);
-    // } catch (e) {
-    //   // Catch errors, and if it is not a forced user error (User cancelled the prompt)
-    //   // Log the error and end the process
-    //   if (!e.user) {
-    //     console.error(e);
-    //     return;
-    //   }
-    // }
+    try {
+      wasi.start(instance);
+    } catch (e) {
+      // Catch errors, and if it is not a forced user error (User cancelled the prompt)
+      // Log the error and end the process
+      if (!e.user) {
+        console.error(e);
+        return;
+      }
+    }
 
     // User cancelled the prompt!
 
     // Output what's inside of /dev/stdout!
-    let stdout = await wasmFs.getStdOut();
 
     // Clean up some of the ANSI Codes from QuickJS:
     // 1. Split by the Clear ANSI Code ([J), and only get the input (-2), and the output (-1)
@@ -141,7 +144,6 @@ function runWASI(url) {
     // stdout = `\n${cleanStdout(stdout)}\n`;
 
     // Add the Standard output to the dom
-    console.log("Standard Output: " + stdout);
   };
   startWasiTask();
 }
