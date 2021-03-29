@@ -18,6 +18,7 @@ import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 import { Terminal } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 
 import Markdown from "markdown-to-jsx";
@@ -116,11 +117,16 @@ function Playground(): JSX.Element {
     } else {
       setCode("");
     }
-
-    var term = new Terminal();
-    term.open(document.getElementById("terminal") as HTMLElement);
-    term.write("Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ");
   }, [content, section]);
+
+  useEffect(() => {
+    var term = new Terminal();
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(document.getElementById("terminal") as HTMLElement);
+    fitAddon.fit();
+    term.write("Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ");
+  }, []);
 
   if (!(section in infoList) || !(content in infoList[section].content)) {
     return <Redirect to="/404" />;
@@ -138,7 +144,9 @@ function Playground(): JSX.Element {
               <Typography variant={"h2"} fontWeight={"bold"} fontSize={"24px"}>
                 {infoList[section].content[content].title}
               </Typography>
-              <Markdown options={{ wrapper: "article" }}>{article}</Markdown>
+              <Box style={{ marginBottom: "56px" }}>
+                <Markdown options={{ wrapper: "article" }}>{article}</Markdown>
+              </Box>
             </Paper>
           </Box>
           <Box className={classes.buttonBar}>
