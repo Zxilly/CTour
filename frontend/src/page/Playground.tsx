@@ -6,6 +6,10 @@ import { Redirect, Link, useParams } from "react-router-dom";
 import { Box, Button, Grid, Paper, Typography } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
 
+import _ from "lodash";
+
+import initWASM from "../wasm";
+
 import AceEditor from "react-ace";
 import "ace-builds/webpack-resolver";
 import "ace-builds/src-noconflict/mode-c_cpp";
@@ -21,23 +25,6 @@ interface PlaygroundRouteParams {
   section: string;
   content: string;
 }
-
-const loadDynamicScript = (url: string, callback?: any) => {
-  const existingScript = document.getElementById("userProgram");
-
-  if (existingScript) {
-    existingScript.remove();
-  }
-
-  const script = document.createElement("script");
-  script.src = url;
-  script.id = "userProgram";
-  document.body.appendChild(script);
-
-  script.onload = () => {
-    if (callback) callback();
-  };
-};
 
 function Playground(): JSX.Element {
   const { section, content } = useParams<PlaygroundRouteParams>();
@@ -57,16 +44,42 @@ function Playground(): JSX.Element {
     }
   };
 
-  const hookConsole = (output:CallableFunction) => {
-    console.log = (data: any) => {
-      output(data);
-      if (typeof data === "string") {
-        setOutput((prevContent) => prevContent + data);
-      }
-    };
+  // const hookConsole = () => {
+  //   const output = console.log;
+  //   console.log = (data: any) => {
+  //     output(data);
+  //     if (typeof data === "string") {
+  //       setOutput((prevContent) => prevContent + data);
+  //     }
+  //   };
+  //   setTimeout(() => {
+  //     console.log = output;
+  //   }, 1200);
+  // };
+
+  // const loadDynamicScript = (url: string) => {
+  //   const existingScript = document.getElementById("userProgram");
+  //
+  //   if (existingScript) {
+  //     existingScript.remove();
+  //   }
+  //
+  //   const script = document.createElement("script");
+  //   script.src = url;
+  //   script.id = "userProgram";
+  //   document.body.appendChild(script);
+  //
+  //   script.onload = () => {
+  //     hookConsole();
+  //   };
+  // };
+
+  const outputAppend = (s: number) => {
+    const letter = String.fromCharCode(s);
+    setOutput((prevState) => prevState + letter);
   };
 
-  const runCode = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const runCode = _.throttle((e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     setOutput("");
@@ -77,14 +90,17 @@ function Playground(): JSX.Element {
       })
       .then((resp) => {
         if (resp.data.success) {
-          const output = console.log;
-          hookConsole(output)
-          const jsUrl = apiUrl+`/compiled/${resp.data.wasm_id}.js`
-          loadDynamicScript(jsUrl)
+          const wasmUrl = apiUrl + `/compiled/${resp.data.wasm_id}.wasm`;
+          // loadDynamicScript(jsUrl);
+          initWASM(wasmUrl, null, outputAppend, null);
         } else {
           //TODO: 编译错误提示
         }
       });
+  }, 1000);
+
+  const onChange = (newCode: string) => {
+    setCode(newCode);
   };
 
   useEffect(() => {
@@ -179,6 +195,7 @@ function Playground(): JSX.Element {
                   showLineNumbers: true,
                   tabSize: 2,
                 }}
+                onChange={onChange}
               />
             </Paper>
           </Box>

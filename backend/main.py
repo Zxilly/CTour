@@ -1,4 +1,5 @@
 import os
+import subprocess
 import uuid
 
 import uvicorn
@@ -32,44 +33,42 @@ async def emcc_compile(
     with open(file_path, 'w+') as f:
         f.write(code)
 
-    result = os.system(
-        f'{emcc} {file_path} -s WASM=1 -s EXIT_RUNTIME=1 -o {output_path}')
-    success = True if result == 0 else False
+    error = ""
+    success = False
 
-    return {"success": success, "wasm_id": random_name}
+    process = subprocess.Popen([emcc, file_path, "-s", "WASM=1", "-o", output_path])
+    try:
+        returnCode = process.wait(timeout=15)
+        if returnCode != 0:
+            error = process.communicate()[1].decode()
+        else:
+            success = True
+
+    except subprocess.TimeoutExpired:
+        # print("timeout")
+        process.terminate()
+        os.remove(output_path)
+
+    return {"success": success, "wasm_id": random_name, "error": error}
 
 
-mime_type = {
-    'js': 'application/javascript',
-    'wasm': 'application/wasm'
-}
-
-read_type = {
-    'js': 'r+',
-    'wasm': 'rb'
-}
-
-
-@app.get('/compiled/{wasm_id}.{file_type}')
+@app.get('/compiled/{wasm_id}.wasm')
 async def emcc_compiled(
-        wasm_id: int = Path(...),
-        file_type: str = Path(...)
+        wasm_id: int = Path(...)
 ):
-    if file_type not in ['js', 'wasm']:
-        raise HTTPException(400, 'Type Error.')
-
     if len(str(wasm_id)) != 16:
         raise HTTPException(400, 'Length not meet.')
 
-    out = f'/tmp/{wasm_id}.{file_type}'
+    out = f'/tmp/{wasm_id}.wasm'
 
     try:
-        with open(out, read_type[file_type]) as f:
+        with open(out, 'rb') as f:
             content = f.read()
+        os.remove(out)
     except FileNotFoundError:
         raise HTTPException(404, 'Not Found')
 
-    return Response(content=content, media_type=mime_type[file_type])
+    return Response(content=content, media_type='application/wasm')
 
 
 if __name__ == '__main__':
