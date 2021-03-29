@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-emcc = '/mnt/e/Project/CS_Project/2021/CTour/emsdk/upstream/emscripten/emcc'
+emcc = '/home/zxilly/wasi-sdk-12.0/bin/clang'
 
 
 @app.post('/compile')
@@ -28,7 +28,7 @@ async def emcc_compile(
     random_name = str(uuid.uuid4().int >> 64)[0:16]
     # print(random_name)
     file_path = f'/tmp/{random_name}.c'
-    output_path = f'/tmp/{random_name}.js'
+    output_path = f'/tmp/{random_name}.wasm'
 
     with open(file_path, 'w+') as f:
         f.write(code)
@@ -36,7 +36,7 @@ async def emcc_compile(
     error = ""
     success = False
 
-    process = subprocess.Popen([emcc, file_path, "-s", "WASM=1", "-o", output_path])
+    process = subprocess.Popen([emcc,"--sysroot" ,"/home/zxilly/wasi-sdk-12.0/share/wasi-sysroot", file_path, "-o", output_path])
     try:
         returnCode = process.wait(timeout=15)
         if returnCode != 0:

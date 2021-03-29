@@ -8,7 +8,8 @@ import React, { useEffect, useState } from "react";
 
 import _ from "lodash";
 
-import initWASM from "../wasm";
+// import initWASM from "../wasm";
+import runWASI from "../wasi";
 
 import AceEditor from "react-ace";
 import "ace-builds/webpack-resolver";
@@ -44,36 +45,6 @@ function Playground(): JSX.Element {
     }
   };
 
-  // const hookConsole = () => {
-  //   const output = console.log;
-  //   console.log = (data: any) => {
-  //     output(data);
-  //     if (typeof data === "string") {
-  //       setOutput((prevContent) => prevContent + data);
-  //     }
-  //   };
-  //   setTimeout(() => {
-  //     console.log = output;
-  //   }, 1200);
-  // };
-
-  // const loadDynamicScript = (url: string) => {
-  //   const existingScript = document.getElementById("userProgram");
-  //
-  //   if (existingScript) {
-  //     existingScript.remove();
-  //   }
-  //
-  //   const script = document.createElement("script");
-  //   script.src = url;
-  //   script.id = "userProgram";
-  //   document.body.appendChild(script);
-  //
-  //   script.onload = () => {
-  //     hookConsole();
-  //   };
-  // };
-
   const outputAppend = (s: number) => {
     const letter = String.fromCharCode(s);
     setOutput((prevState) => prevState + letter);
@@ -92,7 +63,8 @@ function Playground(): JSX.Element {
         if (resp.data.success) {
           const wasmUrl = apiUrl + `/compiled/${resp.data.wasm_id}.wasm`;
           // loadDynamicScript(jsUrl);
-          initWASM(wasmUrl, null, outputAppend, null);
+          // initWASM(wasmUrl, null, outputAppend, null);
+          runWASI(wasmUrl);
         } else {
           //TODO: 编译错误提示
         }
