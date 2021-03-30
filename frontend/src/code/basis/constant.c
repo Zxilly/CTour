@@ -1,5 +1,5 @@
-#include<stdio.h>
+#include <stdio.h>
 int main(void){
     const int i = 666;
-    printf("%d",i);
+    printf("%d\n",i);
 }
