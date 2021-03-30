@@ -3,10 +3,28 @@ code {
 }
 
 pre, code {
-    font-family: 'Consolas', sans-serif;
+    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
     border-radius: 4px;
     color: #333;
-    background-color: #fafafa;
+    background-color: #1b1f230d;
+}
+
+code {
+    padding: 0.2em 0.4em;
+    font-size: 85%;
+    border-radius: 6px;
+    color: #24292E;
+    background-color: #1b1f230d;
+}
+
+pre {
+    padding: 16px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: #f6f8fa;
+    border-radius: 6px;
+    word-wrap: normal;
 }
 
 .xterm-viewport::-webkit-scrollbar {

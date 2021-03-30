@@ -7,7 +7,7 @@ import { previousContent, nextContent } from "../util/contentHandler";
 
 import { Redirect, Link, useParams } from "react-router-dom";
 import { Box, Button, Grid, Paper, Typography } from "@material-ui/core";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 // import initWASM from "../wasm";
 
@@ -37,7 +37,9 @@ function Playground(): JSX.Element {
 
   const [code, setCode] = useState("");
   const [article, setArticle] = useState("");
-  const [terminal, setTerminal] = useState("");
+  const terminal = useRef(
+    new Terminal({ cursorBlink: true, cursorStyle: "bar" })
+  );
 
   const getPath = (callback: any) => {
     const result = callback(section, content);
@@ -70,21 +72,20 @@ function Playground(): JSX.Element {
       len = buf.length;
     }
 
-    console.log(buf, off, len, pos);
+    // console.log(buf, off, len, pos);
 
     let tempStr = "";
     for (let i = off; i < len; i++) {
       tempStr += String.fromCharCode(buf[i]);
     }
-    console.log(tempStr);
-    setTerminal((prevState) => prevState + tempStr);
+    // console.log(tempStr);
+    // setTerminal((prevState) => prevState + tempStr);
+    terminal.current.write(tempStr);
     return len;
   };
 
   const runCode = _.throttle((e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-
-    setTerminal("");
 
     axios
       .post(apiUrl + "/compile", {
@@ -93,7 +94,11 @@ function Playground(): JSX.Element {
       .then((resp) => {
         if (resp.data.success) {
           const wasmUrl = apiUrl + `/compiled/${resp.data.wasm_id}.wasm`;
-          runWASI(wasmUrl, readFunc, writeFunc);
+          runWASI(wasmUrl, readFunc, writeFunc, () => {
+            // terminal.current.clear();
+            // terminal.current.clearSelection();
+            terminal.current.reset();
+          });
         } else {
           //TODO: 编译错误提示
         }
@@ -120,12 +125,11 @@ function Playground(): JSX.Element {
   }, [content, section]);
 
   useEffect(() => {
-    var term = new Terminal();
+    const term = terminal.current;
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
     term.open(document.getElementById("terminal") as HTMLElement);
     fitAddon.fit();
-    term.write("Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ");
   }, []);
 
   if (!(section in infoList) || !(content in infoList[section].content)) {

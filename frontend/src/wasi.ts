@@ -3,14 +3,19 @@ import browserBindings from "@wasmer/wasi/lib/bindings/browser";
 import { WasmFs } from "@wasmer/wasmfs";
 
 interface readFuncType {
-  (buf: Buffer | Uint8Array, off?: number, len?: number, pos?: number): number
+  (buf: Buffer | Uint8Array, off?: number, len?: number, pos?: number): number;
 }
 
 interface writeFuncType {
-  (buf: Buffer, off?: number, len?: number, pos?: number): number
+  (buf: Buffer, off?: number, len?: number, pos?: number): number;
 }
 
-function runWASI(url: string,readFunc:readFuncType,writeFunc:writeFuncType) {
+function runWASI(
+  url: string,
+  readFunc: readFuncType,
+  writeFunc: writeFuncType,
+  clearFunc: () => void
+) {
   // The file path to the wasi module we want to run
   const wasmFilePath = url;
 
@@ -21,14 +26,14 @@ function runWASI(url: string,readFunc:readFuncType,writeFunc:writeFuncType) {
      MIT License Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
      */
   /*const cleanStdout = (stdout: string) => {
-    const pattern = [
-      "[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)",
-      "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))",
-    ].join("|");
+      const pattern = [
+        "[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)",
+        "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))",
+      ].join("|");
 
-    const regexPattern = new RegExp(pattern, "g");
-    return stdout.replace(regexPattern, "");
-  };*/
+      const regexPattern = new RegExp(pattern, "g");
+      return stdout.replace(regexPattern, "");
+    };*/
 
   // Instantiate a new WASI and WasmFs Instance
   // NOTE: For node WasmFs is not needed, and the native Fs module is assigned by default
@@ -58,45 +63,44 @@ function runWASI(url: string,readFunc:readFuncType,writeFunc:writeFuncType) {
   // per the C api. Otherwise, the Wasi module will error.
   // let readStdinCounter = 0;
   // Assign all reads to fd 0 (in this case, /dev/stdin) to our custom function
-  wasmFs.volume.fds[0].node.read = readFunc // 这个是读 stdin 的
-  wasmFs.volume.fds[1].node.write = writeFunc // 这个是写 stdout 的
-
-
+  wasmFs.volume.fds[0].node.read = readFunc; // 这个是读 stdin 的
+  wasmFs.volume.fds[1].node.write = writeFunc; // 这个是写 stdout 的
+  // wasmFs.volume.fds[2].node.write = undefined
 
   /*wasmFs.volume.fds[0].node.read = (
-    stdinBuffer, // Uint8Array of the buffer that is sent to the guest Wasm module's standard input
-    offset, // offset for the standard input
-    length, // length of the standard input
-    position // Position in the input
-  ) => {
-    // Per the C API, first read should be the string
-    // Second read would be the end of the string
-    if (readStdinCounter % 2 !== 0) {
-      readStdinCounter++;
-      return 0;
-    }
+      stdinBuffer, // Uint8Array of the buffer that is sent to the guest Wasm module's standard input
+      offset, // offset for the standard input
+      length, // length of the standard input
+      position // Position in the input
+    ) => {
+      // Per the C API, first read should be the string
+      // Second read would be the end of the string
+      if (readStdinCounter % 2 !== 0) {
+        readStdinCounter++;
+        return 0;
+      }
 
-    // Use window.prompt to synchronously get input from the user
-    // This will block the entire main thread until this finishes.
-    // To do this more clean-ly, it would be best to use a Web Worker
-    // and Shared Array Buffer. And use prompt as a fallback
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer
-    // https://github.com/wasmerio/wasmer-js/blob/master/packages/wasm-terminal/src/process/process.ts#L174
-    let responseStdin = (`Input\n`);
+      // Use window.prompt to synchronously get input from the user
+      // This will block the entire main thread until this finishes.
+      // To do this more clean-ly, it would be best to use a Web Worker
+      // and Shared Array Buffer. And use prompt as a fallback
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer
+      // https://github.com/wasmerio/wasmer-js/blob/master/packages/wasm-terminal/src/process/process.ts#L174
+      let responseStdin = (`Input\n`);
 
-    // When the user cancels, throw an error to get out of the standard input read loop
-    // From the guest Wasm modules (quickjs)
-    responseStdin += "\n";
+      // When the user cancels, throw an error to get out of the standard input read loop
+      // From the guest Wasm modules (quickjs)
+      responseStdin += "\n";
 
-    // Encode the string into bytes to be placed into the buffer for standard input
-    const buffer = new TextEncoder().encode(responseStdin);
-    for (let x = 0; x < buffer.length; ++x) {
-      stdinBuffer[x] = buffer[x];
-    }
+      // Encode the string into bytes to be placed into the buffer for standard input
+      const buffer = new TextEncoder().encode(responseStdin);
+      for (let x = 0; x < buffer.length; ++x) {
+        stdinBuffer[x] = buffer[x];
+      }
 
-    // Return the current stdin, per the C API
-    return buffer.length;
-  };*/
+      // Return the current stdin, per the C API
+      return buffer.length;
+    };*/
 
   // Async Function to run our wasi module/instance
   const startWasiTask = async () => {
@@ -119,6 +123,9 @@ function runWASI(url: string,readFunc:readFuncType,writeFunc:writeFuncType) {
     });
 
     // Start the WebAssembly WASI instance!
+
+    clearFunc();
+
     try {
       wasi.start(instance);
     } catch (e) {
