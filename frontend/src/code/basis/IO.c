@@ -1,17 +1,19 @@
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 int main(void){
-   char c;
-   c = getchar();
+   char c = 'A';
    putchar(c);
    printf("\n");
    
-   int a ; 
-   scanf("%d\n" , &a);
+   int a = 123 ; 
    printf("%d\n" , a);
+      
+   double b = 3.141592;
+   printf("%lf\n",b);
    
-   char str[1024] ;
-	gets(str);
+
+   
+   char str[1024] = { "abcdefg" } ; 
    puts(str);
    printf("\n");
 }

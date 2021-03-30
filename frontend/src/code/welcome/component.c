@@ -1,5 +1,5 @@
-#include <stdio.h>		//此行作用是引入名为“stdio.h”的头文件
-int main(void){			//定义主函数
-    int i = 666;		//定义了一个int类型的变量
-    printf("%d\n",i);	//使用输出函数对变量进行输出
+#include <stdio.h>		//姝よ浣滅敤鏄紩鍏ュ悕涓衡�渟tdio.h鈥濈殑澶存枃浠�
+int main(void){			//瀹氫箟涓诲嚱鏁�
+    int i = 666;		//瀹氫箟浜嗕竴涓猧nt绫诲瀷鐨勫彉閲�
+    printf("%d\n",i);	//浣跨敤杈撳嚭鍑芥暟瀵瑰彉閲忚繘琛岃緭鍑�
 }
