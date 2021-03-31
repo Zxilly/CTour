@@ -18,7 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-emcc = '/home/zxilly/wasi-sdk-12.0/bin/clang'
+
+# emcc = '/home/zxilly/wasi-sdk-12.0/bin/clang'
 
 
 @app.post('/compile')
@@ -28,7 +29,7 @@ async def emcc_compile(
     random_name = str(uuid.uuid4().int >> 64)[0:16]
     # print(random_name)
     file_path = f'/tmp/{random_name}.c'
-    output_path = f'/tmp/{random_name}.wasm'
+    output_path = f'/tmp/{random_name}.js'
 
     with open(file_path, 'w+') as f:
         f.write(code)
@@ -36,7 +37,23 @@ async def emcc_compile(
     error = ""
     success = False
 
-    process = subprocess.Popen([emcc,"--sysroot" ,"/home/zxilly/wasi-sdk-12.0/share/wasi-sysroot", file_path, "-o", output_path])
+    # process = subprocess.Popen(
+    #     ["emcc", "--sysroot", "/home/zxilly/wasi-sdk-12.0/share/wasi-sysroot", file_path, "-o", output_path],
+    #     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    emcc = "/home/zxilly/emsdk/upstream/emscripten/emcc"
+
+    process = subprocess.Popen(
+        [emcc, file_path, "-o", output_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env={
+            "EMSDK": "/home/zxilly/emsdk",
+            "EM_CONFIG": "/home/zxilly/emsdk/.emscripten",
+            "EM_CACHE": "/home/zxilly/emsdk/upstream/emscripten/cache",
+            "EMSDK_NODE": "/home/zxilly/emsdk/node/14.15.5_64bit/bin/node",
+        }
+    )
+
+    # emcc main.c -s FORCE_FILESYSTEM=1 -s EXPORT_ALL=1 -s STRICT=1 -s IGNORE_MISSING_MAIN=0 -s WASM_ASYNC_COMPILATION=0 -s MODULARIZE=1 -s EXPORT_ES6=1 -s EXIT_RUNTIME=1 -s ENVIRONMENT=web -o main.js
+
     try:
         returnCode = process.wait(timeout=15)
         if returnCode != 0:
@@ -47,7 +64,9 @@ async def emcc_compile(
     except subprocess.TimeoutExpired:
         # print("timeout")
         process.terminate()
-        os.remove(output_path)
+        error = 'Compile Timeout'
+
+    os.remove(file_path)
 
     return {"success": success, "wasm_id": random_name, "error": error}
 
@@ -64,7 +83,8 @@ async def emcc_compiled(
     try:
         with open(out, 'rb') as f:
             content = f.read()
-        os.remove(out)
+
+        # os.remove(out)
     except FileNotFoundError:
         raise HTTPException(404, 'Not Found')
 
@@ -72,4 +92,4 @@ async def emcc_compiled(
 
 
 if __name__ == '__main__':
-    uvicorn.run('main:app', host='0.0.0.0')
+    uvicorn.run('main:app', host='0.0.0.0',debug=True)

@@ -1,7 +1,8 @@
 import infoList from "../list";
 import "./PlayGround.css";
 import useStyles from "../util/style";
-import runWASI from "../wasi";
+
+import Module from "../util/emscripten";
 import { apiUrl } from "../App";
 import { previousContent, nextContent } from "../util/contentHandler";
 
@@ -50,39 +51,72 @@ function Playground(): JSX.Element {
     }
   };
 
-  const readFunc = (
-    buf: Buffer | Uint8Array,
-    off?: number,
-    len?: number,
-    pos?: number
-  ): number => {
-    return 0;
+  const stdin = () => {
+    return null;
   };
 
-  const writeFunc = (
-    buf: Buffer,
-    off?: number,
-    len?: number,
-    pos?: number
-  ): number => {
-    if (!off) {
-      off = 0;
-    }
-    if (!len) {
-      len = buf.length;
+  let rflag = false;
+  const stdout = (code: number|null) => {
+    if (code===null){
+      terminal.current.reset()
     }
 
-    // console.log(buf, off, len, pos);
-
-    let tempStr = "";
-    for (let i = off; i < len; i++) {
-      tempStr += String.fromCharCode(buf[i]);
+    let str = String.fromCharCode(code as number);
+    switch (str) {
+      case "\n": {
+        if (!rflag) {
+          str = "\r\n";
+          rflag = false;
+        }
+        break;
+      }
+      case "\r": {
+        rflag = true;
+        break;
+      }
+      default: {
+        rflag = false;
+      }
     }
-    // console.log(tempStr);
-    // setTerminal((prevState) => prevState + tempStr);
-    terminal.current.write(tempStr);
-    return len;
+    terminal.current.write(str);
   };
+
+  // const readFunc = (
+  //   buf: Buffer | Uint8Array,
+  //   off?: number,
+  //   len?: number,
+  //   pos?: number
+  // ): number => {
+  //   return 0;
+  // };
+
+  // const writeFunc = (
+  //   buf: Buffer,
+  //   off?: number,
+  //   len?: number,
+  //   pos?: number
+  // ): number => {
+  //   if (!off) {
+  //     off = 0;
+  //   }
+  //   if (!len) {
+  //     len = buf.length;
+  //   }
+  //
+  //   // console.log(buf, off, len, pos);
+  //
+  //   let tempStr = "";
+  //   for (let i = off; i < len; i++) {
+  //     tempStr += String.fromCharCode(buf[i]);
+  //   }
+  //
+  //   tempStr = tempStr.replace("\n", "\r\n");
+  //
+  //   // console.log(tempStr);
+  //   // setTerminal((prevState) => prevState + tempStr);
+  //   terminal.current.write(tempStr);
+  //   return len;
+  // };
 
   const runCode = _.throttle((e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -94,10 +128,8 @@ function Playground(): JSX.Element {
       .then((resp) => {
         if (resp.data.success) {
           const wasmUrl = apiUrl + `/compiled/${resp.data.wasm_id}.wasm`;
-          runWASI(wasmUrl, readFunc, writeFunc, () => {
-            // terminal.current.clear();
-            // terminal.current.clearSelection();
-            terminal.current.reset();
+          Module(wasmUrl,stdin,stdout).then((instance: any) => {
+            console.log(instance);
           });
         } else {
           //TODO: 编译错误提示
@@ -122,6 +154,7 @@ function Playground(): JSX.Element {
     } else {
       setCode("");
     }
+    terminal.current.reset();
   }, [content, section]);
 
   useEffect(() => {
