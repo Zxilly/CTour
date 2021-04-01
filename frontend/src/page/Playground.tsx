@@ -10,7 +10,7 @@ import { Redirect, Link, useParams } from "react-router-dom";
 import { Box, Button, Grid, Paper, Typography } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 
-// import initWASM from "../wasm";
+import sleep from "atomic-sleep";
 
 import AceEditor from "react-ace";
 import "ace-builds/webpack-resolver";
@@ -44,6 +44,8 @@ function Playground(): JSX.Element {
     new Terminal({ cursorBlink: true, cursorStyle: "bar" })
   );
 
+  const inputReady = useRef(false);
+
   const getPath = (callback: any) => {
     const result = callback(section, content);
     if (result[2]) {
@@ -54,7 +56,21 @@ function Playground(): JSX.Element {
   };
 
   const stdin = () => {
-    return null;
+    const inputFlag = inputReady.current;
+    if (input.length > 0) {
+      const code = input.charCodeAt(0);
+      setInput(() => input.substring(1));
+      return code;
+    } else {
+      while (true) {
+        if (inputFlag) {
+          console.log("has input");
+          break;
+        }
+        console.log("wait for input");
+        //sleep(1000);
+      }
+    }
   };
 
   let rflag = false;
@@ -132,6 +148,8 @@ function Playground(): JSX.Element {
     term.onData((e) => {
       switch (e) {
         case "\r": {
+          let flag = inputReady.current;
+          flag = true;
           break;
         }
         case "\u0003": // Ctrl+C
@@ -143,6 +161,7 @@ function Playground(): JSX.Element {
             // @ts-ignore
             console.log(term._core);
           }
+          setInput((str) => str.substring(0, str.length - 2));
           break;
         default:
           // Print all other characters for demo
