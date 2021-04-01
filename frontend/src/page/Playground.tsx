@@ -2,9 +2,11 @@ import infoList from "../list";
 import "./PlayGround.css";
 import useStyles from "../util/style";
 
-import Module from "../util/emscripten";
 import { apiUrl } from "../App";
 import { previousContent, nextContent } from "../util/contentHandler";
+
+/* eslint-disable-next-line import/no-webpack-loader-syntax */
+import Worker from "worker-loader!../util/runtime.worker";
 
 import { Redirect, Link, useParams } from "react-router-dom";
 import { Box, Button, Grid, Paper, Typography } from "@material-ui/core";
@@ -42,7 +44,7 @@ function Playground(): JSX.Element {
     new Terminal({ cursorBlink: true, cursorStyle: "bar" })
   );
 
-  const inputReady = useRef(new Int32Array(new SharedArrayBuffer(4)));
+  const workerRef = useRef<Worker>();
 
   const getPath = (callback: any) => {
     const result = callback(section, content);
@@ -53,53 +55,10 @@ function Playground(): JSX.Element {
     }
   };
 
-  const stdin = (): number => {
-    // throw new Error("wtf");
-
-    const inputFlag = inputReady.current;
-    if (input.length > 0) {
-      const code = input.charCodeAt(0);
-      setInput(() => input.substring(1));
-      return code;
-    } else {
-      console.log(`Wait at ${Date.now()}`);
-      Atomics.wait(inputFlag, 0, 0, 30000);
-      console.log(`Wakeup at ${Date.now()}`);
-      return stdin();
-    }
-  };
-
-  let rflag = false;
-  const stdout = (code: number | null) => {
-    if (code === null) {
-      terminal.current.reset();
-    }
-
-    let str = String.fromCharCode(code as number);
-    switch (str) {
-      case "\n": {
-        if (!rflag) {
-          str = "\r\n";
-          rflag = false;
-        }
-        break;
-      }
-      case "\r": {
-        rflag = true;
-        break;
-      }
-      default: {
-        rflag = false;
-      }
-    }
-    terminal.current.write(str);
-  };
-
-  const runCode = _.throttle((e: React.MouseEvent<HTMLButtonElement>) => {
+  const runCode = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     terminal.current.reset();
-
     axios
       .post(apiUrl + "/compile", {
         code: code,
@@ -107,15 +66,17 @@ function Playground(): JSX.Element {
       .then((resp) => {
         if (resp.data.success) {
           const wasmUrl = apiUrl + `/compiled/${resp.data.wasm_id}.wasm`;
-          Module(wasmUrl, stdin, stdout, null, null).then((instance: any) => {
-            // instance.run()
-            console.log(instance);
-          });
+          if (workerRef.current) {
+            workerRef.current.postMessage({
+              type: "run",
+              data: wasmUrl,
+            });
+          }
         } else {
           //TODO: 编译错误提示
         }
       });
-  }, 1000);
+  };
 
   const onEditorChange = (newCode: string) => {
     setCode(newCode);
@@ -136,8 +97,6 @@ function Playground(): JSX.Element {
     }
 
     terminal.current.reset();
-
-    Atomics.store(inputReady.current, 0, 0);
   }, [content, section]);
 
   useEffect(() => {
@@ -150,8 +109,6 @@ function Playground(): JSX.Element {
     term.onData((e) => {
       switch (e) {
         case "\r": {
-          Atomics.exchange(inputReady.current, 0, 1);
-          Atomics.notify(inputReady.current, 0, 1);
           break;
         }
         case "\u0003": // Ctrl+C
@@ -171,6 +128,46 @@ function Playground(): JSX.Element {
           setInput((input) => e + input);
       }
     });
+
+    const worker = new Worker();
+
+    let rflag = false;
+    const stdout = (keyCode: number) => {
+      if (keyCode === null) {
+        terminal.current.reset();
+      }
+
+      let str = String.fromCharCode(keyCode);
+      switch (str) {
+        case "\n": {
+          if (!rflag) {
+            str = "\r\n";
+            rflag = false;
+          }
+          break;
+        }
+        case "\r": {
+          rflag = true;
+          break;
+        }
+        default: {
+          rflag = false;
+        }
+      }
+      terminal.current.write(str);
+    };
+
+    worker.onmessage = (ev) => {
+      let msgType = ev.data.type;
+      switch (msgType) {
+        case "stdout": {
+          stdout(ev.data.data);
+          break;
+        }
+      }
+    };
+
+    workerRef.current = worker;
   }, []);
 
   if (!(section in infoList) || !(content in infoList[section].content)) {

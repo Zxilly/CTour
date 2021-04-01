@@ -1,18 +1,7 @@
-/* eslint-disable */
-
 var Module = (function () {
   var _scriptDir = undefined;
 
-  return function (wasmBinaryFile, stdin, stdout, stderr, prerun, onexit) {
-    Module = {};
-
-    Module["preRun"] = prerun;
-    Module["noInitialRun"] = true;
-    Module["onExit"] = onexit;
-    Module["stdin"] = stdin;
-    Module["stdout"] = stdout;
-    Module["stderr"] = stderr;
-
+  return function (wasmUrl, stdin, stdout, stderr) {
     // The Module object: Our interface to the outside world. We import
     // and export values on it. There are various ways Module can be used:
     // 1. Not defined. We create it here
@@ -26,7 +15,11 @@ var Module = (function () {
     // after the generated code, you will need to define   var Module = {};
     // before the code. Then that object will be used in the code, and you
     // can continue to use Module afterwards as well.
-    var Module = typeof Module !== "undefined" ? Module : {};
+    var Module = {};
+
+    Module["stdin"] = stdin;
+    Module["stdout"] = stdout;
+    Module["stderr"] = stderr;
 
     // Set up the promise that indicates the Module is initialized
     var readyPromiseResolve, readyPromiseReject;
@@ -329,8 +322,8 @@ var Module = (function () {
     // Determine the runtime environment we are in. You can customize this by
     // setting the ENVIRONMENT setting at compile time (see settings.js).
 
-    var ENVIRONMENT_IS_WEB = true;
-    var ENVIRONMENT_IS_WORKER = false;
+    var ENVIRONMENT_IS_WEB = false;
+    var ENVIRONMENT_IS_WORKER = true;
     var ENVIRONMENT_IS_NODE = false;
     var ENVIRONMENT_IS_SHELL = false;
 
@@ -357,7 +350,10 @@ var Module = (function () {
     // Node.js workers are detected as a combination of ENVIRONMENT_IS_WORKER and
     // ENVIRONMENT_IS_NODE.
     if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
-      if (typeof document !== "undefined" && document.currentScript) {
+      if (ENVIRONMENT_IS_WORKER) {
+        // Check worker, not web, since window could be polyfilled
+        scriptDirectory = self.location.href;
+      } else if (typeof document !== "undefined" && document.currentScript) {
         // web
         scriptDirectory = document.currentScript.src;
       }
@@ -876,9 +872,9 @@ var Module = (function () {
     // In traditional runtime, setValue() and getValue() are always available (although their use is highly discouraged due to perf penalties)
 
     /** @param {number} ptr
-             @param {number} value
-             @param {string} type
-             @param {number|boolean=} noSafe */
+         @param {number} value
+         @param {string} type
+         @param {number|boolean=} noSafe */
     function setValue(ptr, value, type, noSafe) {
       type = type || "i8";
       if (type.charAt(type.length - 1) === "*") type = "i32"; // pointers are 32-bit
@@ -896,9 +892,10 @@ var Module = (function () {
           HEAP32[ptr >> 2] = value;
           break;
         case "i64":
-          tempI64 = [
+          (tempI64 = [
             value >>> 0,
-            (tempDouble = value) + Math.abs(tempDouble) >= 1.0
+            ((tempDouble = value),
+            +Math.abs(tempDouble) >= 1.0
               ? tempDouble > 0.0
                 ? (Math.min(
                     +Math.floor(tempDouble / 4294967296.0),
@@ -909,10 +906,10 @@ var Module = (function () {
                 : ~~+Math.ceil(
                     (tempDouble - +(~~tempDouble >>> 0)) / 4294967296.0
                   ) >>> 0
-              : 0,
-          ];
-          HEAP32[ptr >> 2] = tempI64[0];
-          HEAP32[(ptr + 4) >> 2] = tempI64[1];
+              : 0),
+          ]),
+            (HEAP32[ptr >> 2] = tempI64[0]),
+            (HEAP32[(ptr + 4) >> 2] = tempI64[1]);
           break;
         case "float":
           HEAPF32[ptr >> 2] = value;
@@ -926,8 +923,8 @@ var Module = (function () {
     }
 
     /** @param {number} ptr
-             @param {string} type
-             @param {number|boolean=} noSafe */
+         @param {string} type
+         @param {number|boolean=} noSafe */
     function getValue(ptr, type, noSafe) {
       type = type || "i8";
       if (type.charAt(type.length - 1) === "*") type = "i32"; // pointers are 32-bit
@@ -989,9 +986,9 @@ var Module = (function () {
 
     // C calling interface.
     /** @param {string|null=} returnType
-             @param {Array=} argTypes
-             @param {Arguments|Array=} args
-             @param {Object=} opts */
+         @param {Array=} argTypes
+         @param {Arguments|Array=} args
+         @param {Object=} opts */
     function ccall(ident, returnType, argTypes, args, opts) {
       // For fast lookup of conversion functions
       var toC = {
@@ -1042,8 +1039,8 @@ var Module = (function () {
     }
 
     /** @param {string=} returnType
-             @param {Array=} argTypes
-             @param {Object=} opts */
+         @param {Array=} argTypes
+         @param {Object=} opts */
     function cwrap(ident, returnType, argTypes, opts) {
       return function () {
         return ccall(ident, returnType, argTypes, arguments, opts);
@@ -1490,7 +1487,7 @@ var Module = (function () {
     // function stringToUTF8Array() instead, which takes in a maximum length that can be used
     // to be secure from out of bounds writes.
     /** @deprecated
-             @param {boolean=} dontAddNull */
+         @param {boolean=} dontAddNull */
     function writeStringToMemory(string, buffer, dontAddNull) {
       warnOnce(
         "writeStringToMemory is deprecated and should not be called! Use stringToUTF8() instead!"
@@ -1958,9 +1955,10 @@ var Module = (function () {
       };
     }
 
-    if (!isDataURI(wasmBinaryFile)) {
-      wasmBinaryFile = locateFile(wasmBinaryFile);
-    }
+    var wasmBinaryFile = wasmUrl;
+    // if (!isDataURI(wasmBinaryFile)) {
+    //   wasmBinaryFile = locateFile(wasmBinaryFile);
+    // }
 
     function getBinary(file) {
       try {
@@ -2498,13 +2496,13 @@ var Module = (function () {
               if (result !== null) {
                 result += "\n";
               }
-            } /*else if (typeof readline == "function") {
+            } else if (typeof readline == "function") {
               // Command line.
               result = readline();
               if (result !== null) {
                 result += "\n";
               }
-            }*/
+            }
             if (!result) {
               return null;
             }
@@ -4745,16 +4743,12 @@ var Module = (function () {
             }
           },
           read: function (stream, buffer, offset, length, pos /* ignored */) {
-            console.log(stream, buffer, offset, length);
             var bytesRead = 0;
             for (var i = 0; i < length; i++) {
               var result;
               try {
-                console.log(`start read at ${Date.now()}`);
                 result = input();
-                console.log(`end read at ${Date.now()}`);
               } catch (e) {
-                console.log(e);
                 throw new FS.ErrnoError(29);
               }
               if (result === undefined && bytesRead === 0) {
@@ -5016,7 +5010,7 @@ var Module = (function () {
         canOwn,
         preFinish
       ) {
-        // Browser.init(); // XXX perhaps this method should move onto Browser?
+        Browser.init(); // XXX perhaps this method should move onto Browser?
         // TODO we should allow people to just pass in a complete filename instead
         // of parent and name being that we just join them anyways
         var fullname = name
@@ -5056,13 +5050,13 @@ var Module = (function () {
 
         addRunDependency(dep);
         if (typeof url == "string") {
-          // Browser.asyncLoad(
-          //   url,
-          //   function (byteArray) {
-          //     processData(byteArray);
-          //   },
-          //   onerror
-          // );
+          Browser.asyncLoad(
+            url,
+            function (byteArray) {
+              processData(byteArray);
+            },
+            onerror
+          );
         } else {
           processData(url);
         }
@@ -5251,9 +5245,10 @@ var Module = (function () {
         HEAP32[(buf + 24) >> 2] = stat.gid;
         HEAP32[(buf + 28) >> 2] = stat.rdev;
         HEAP32[(buf + 32) >> 2] = 0;
-        tempI64 = [
+        (tempI64 = [
           stat.size >>> 0,
-          (tempDouble = stat.size) + Math.abs(tempDouble) >= 1.0
+          ((tempDouble = stat.size),
+          +Math.abs(tempDouble) >= 1.0
             ? tempDouble > 0.0
               ? (Math.min(
                   +Math.floor(tempDouble / 4294967296.0),
@@ -5264,10 +5259,10 @@ var Module = (function () {
               : ~~+Math.ceil(
                   (tempDouble - +(~~tempDouble >>> 0)) / 4294967296.0
                 ) >>> 0
-            : 0,
-        ];
-        HEAP32[(buf + 40) >> 2] = tempI64[0];
-        HEAP32[(buf + 44) >> 2] = tempI64[1];
+            : 0),
+        ]),
+          (HEAP32[(buf + 40) >> 2] = tempI64[0]),
+          (HEAP32[(buf + 44) >> 2] = tempI64[1]);
         HEAP32[(buf + 48) >> 2] = 4096;
         HEAP32[(buf + 52) >> 2] = stat.blocks;
         HEAP32[(buf + 56) >> 2] = (stat.atime.getTime() / 1000) | 0;
@@ -5276,9 +5271,10 @@ var Module = (function () {
         HEAP32[(buf + 68) >> 2] = 0;
         HEAP32[(buf + 72) >> 2] = (stat.ctime.getTime() / 1000) | 0;
         HEAP32[(buf + 76) >> 2] = 0;
-        tempI64 = [
+        (tempI64 = [
           stat.ino >>> 0,
-          (tempDouble = stat.ino) + Math.abs(tempDouble) >= 1.0
+          ((tempDouble = stat.ino),
+          +Math.abs(tempDouble) >= 1.0
             ? tempDouble > 0.0
               ? (Math.min(
                   +Math.floor(tempDouble / 4294967296.0),
@@ -5289,10 +5285,10 @@ var Module = (function () {
               : ~~+Math.ceil(
                   (tempDouble - +(~~tempDouble >>> 0)) / 4294967296.0
                 ) >>> 0
-            : 0,
-        ];
-        HEAP32[(buf + 80) >> 2] = tempI64[0];
-        HEAP32[(buf + 84) >> 2] = tempI64[1];
+            : 0),
+        ]),
+          (HEAP32[(buf + 80) >> 2] = tempI64[0]),
+          (HEAP32[(buf + 84) >> 2] = tempI64[1]);
         return 0;
       },
       doMsync: function (addr, stream, len, flags, offset) {
@@ -5454,9 +5450,10 @@ var Module = (function () {
         }
 
         FS.llseek(stream, offset, whence);
-        tempI64 = [
+        (tempI64 = [
           stream.position >>> 0,
-          (tempDouble = stream.position) + Math.abs(tempDouble) >= 1.0
+          ((tempDouble = stream.position),
+          +Math.abs(tempDouble) >= 1.0
             ? tempDouble > 0.0
               ? (Math.min(
                   +Math.floor(tempDouble / 4294967296.0),
@@ -5467,10 +5464,10 @@ var Module = (function () {
               : ~~+Math.ceil(
                   (tempDouble - +(~~tempDouble >>> 0)) / 4294967296.0
                 ) >>> 0
-            : 0,
-        ];
-        HEAP32[newOffset >> 2] = tempI64[0];
-        HEAP32[(newOffset + 4) >> 2] = tempI64[1];
+            : 0),
+        ]),
+          (HEAP32[newOffset >> 2] = tempI64[0]),
+          (HEAP32[(newOffset + 4) >> 2] = tempI64[1]);
         if (stream.getdents && offset === 0 && whence === 0)
           stream.getdents = null; // reset readdir state
         return 0;
@@ -5908,11 +5905,7 @@ var Module = (function () {
         );
       };
     if (!Object.getOwnPropertyDescriptor(Module, "callMain"))
-      Module["callMain"] = function () {
-        abort(
-          "'callMain' was not exported. add it to EXTRA_EXPORTED_RUNTIME_METHODS (see the FAQ)"
-        );
-      };
+      Module["callMain"] = callMain
     if (!Object.getOwnPropertyDescriptor(Module, "abort"))
       Module["abort"] = function () {
         abort(
@@ -7016,20 +7009,28 @@ var Module = (function () {
         readyPromiseResolve(Module);
         if (Module["onRuntimeInitialized"]) Module["onRuntimeInitialized"]();
 
-        callMain(args);
+        if (shouldRunNow) callMain(args);
 
         postRun();
       }
 
-      doRun();
-
+      if (Module["setStatus"]) {
+        Module["setStatus"]("Running...");
+        setTimeout(function () {
+          setTimeout(function () {
+            Module["setStatus"]("");
+          }, 1);
+          doRun();
+        }, 1);
+      } else {
+        doRun();
+      }
       checkStackCookie();
     }
 
     Module["run"] = run;
 
-    /** @param status
-     @param {boolean|number=} implicit */
+    /** @param {boolean|number=} implicit */
     function exit(status, implicit) {
       EXITSTATUS = status;
 
@@ -7073,11 +7074,11 @@ var Module = (function () {
     }
 
     // shouldRunNow refers to calling main(), not run().
-    // var shouldRunNow = true;
-    //
-    // if (Module["noInitialRun"]) shouldRunNow = false;
-    //
-    // run();
+    var shouldRunNow = false;
+
+    if (Module["noInitialRun"]) shouldRunNow = false;
+
+    run();
 
     return Module.ready;
   };
