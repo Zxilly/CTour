@@ -10,8 +10,6 @@ import { Redirect, Link, useParams } from "react-router-dom";
 import { Box, Button, Grid, Paper, Typography } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 
-import sleep from "atomic-sleep";
-
 import AceEditor from "react-ace";
 import "ace-builds/webpack-resolver";
 import "ace-builds/src-noconflict/mode-c_cpp";
@@ -44,7 +42,7 @@ function Playground(): JSX.Element {
     new Terminal({ cursorBlink: true, cursorStyle: "bar" })
   );
 
-  const inputReady = useRef(false);
+  const inputReady = useRef(new Int32Array(new SharedArrayBuffer(4)));
 
   const getPath = (callback: any) => {
     const result = callback(section, content);
@@ -55,21 +53,19 @@ function Playground(): JSX.Element {
     }
   };
 
-  const stdin = () => {
+  const stdin = (): number => {
+    // throw new Error("wtf");
+
     const inputFlag = inputReady.current;
     if (input.length > 0) {
       const code = input.charCodeAt(0);
       setInput(() => input.substring(1));
       return code;
     } else {
-      while (true) {
-        if (inputFlag) {
-          console.log("has input");
-          break;
-        }
-        console.log("wait for input");
-        //sleep(1000);
-      }
+      console.log(`Wait at ${Date.now()}`);
+      Atomics.wait(inputFlag, 0, 0, 30000);
+      console.log(`Wakeup at ${Date.now()}`);
+      return stdin();
     }
   };
 
@@ -102,6 +98,8 @@ function Playground(): JSX.Element {
   const runCode = _.throttle((e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
+    terminal.current.reset();
+
     axios
       .post(apiUrl + "/compile", {
         code: code,
@@ -109,7 +107,8 @@ function Playground(): JSX.Element {
       .then((resp) => {
         if (resp.data.success) {
           const wasmUrl = apiUrl + `/compiled/${resp.data.wasm_id}.wasm`;
-          Module(wasmUrl, stdin, stdout).then((instance: any) => {
+          Module(wasmUrl, stdin, stdout, null, null).then((instance: any) => {
+            // instance.run()
             console.log(instance);
           });
         } else {
@@ -135,7 +134,10 @@ function Playground(): JSX.Element {
     } else {
       setCode("");
     }
+
     terminal.current.reset();
+
+    Atomics.store(inputReady.current, 0, 0);
   }, [content, section]);
 
   useEffect(() => {
@@ -148,8 +150,8 @@ function Playground(): JSX.Element {
     term.onData((e) => {
       switch (e) {
         case "\r": {
-          let flag = inputReady.current;
-          flag = true;
+          Atomics.exchange(inputReady.current, 0, 1);
+          Atomics.notify(inputReady.current, 0, 1);
           break;
         }
         case "\u0003": // Ctrl+C

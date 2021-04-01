@@ -3,8 +3,15 @@
 var Module = (function () {
   var _scriptDir = undefined;
 
-  return function (wasmBinaryFile,stdin,stdout,stderr) {
+  return function (wasmBinaryFile, stdin, stdout, stderr, prerun, onexit) {
     Module = {};
+
+    Module["preRun"] = prerun;
+    Module["noInitialRun"] = true;
+    Module["onExit"] = onexit;
+    Module["stdin"] = stdin;
+    Module["stdout"] = stdout;
+    Module["stderr"] = stderr;
 
     // The Module object: Our interface to the outside world. We import
     // and export values on it. There are various ways Module can be used:
@@ -889,10 +896,9 @@ var Module = (function () {
           HEAP32[ptr >> 2] = value;
           break;
         case "i64":
-          (tempI64 = [
+          tempI64 = [
             value >>> 0,
-            ((tempDouble = value)
-            +Math.abs(tempDouble) >= 1.0
+            (tempDouble = value) + Math.abs(tempDouble) >= 1.0
               ? tempDouble > 0.0
                 ? (Math.min(
                     +Math.floor(tempDouble / 4294967296.0),
@@ -903,10 +909,10 @@ var Module = (function () {
                 : ~~+Math.ceil(
                     (tempDouble - +(~~tempDouble >>> 0)) / 4294967296.0
                   ) >>> 0
-              : 0),
-          ]);
-            (HEAP32[ptr >> 2] = tempI64[0]);
-            (HEAP32[(ptr + 4) >> 2] = tempI64[1]);
+              : 0,
+          ];
+          HEAP32[ptr >> 2] = tempI64[0];
+          HEAP32[(ptr + 4) >> 2] = tempI64[1];
           break;
         case "float":
           HEAPF32[ptr >> 2] = value;
@@ -1698,9 +1704,7 @@ var Module = (function () {
       assert(!runtimeInitialized);
       runtimeInitialized = true;
 
-      if (!Module["noFSInit"] && !FS.init.initialized) FS.init(
-          stdin,stdout,stderr
-      );
+      if (!Module["noFSInit"] && !FS.init.initialized) FS.init();
       TTY.init();
       callRuntimeCallbacks(__ATINIT__);
     }
@@ -4741,12 +4745,16 @@ var Module = (function () {
             }
           },
           read: function (stream, buffer, offset, length, pos /* ignored */) {
+            console.log(stream, buffer, offset, length);
             var bytesRead = 0;
             for (var i = 0; i < length; i++) {
               var result;
               try {
+                console.log(`start read at ${Date.now()}`);
                 result = input();
+                console.log(`end read at ${Date.now()}`);
               } catch (e) {
+                console.log(e);
                 throw new FS.ErrnoError(29);
               }
               if (result === undefined && bytesRead === 0) {
@@ -5243,10 +5251,9 @@ var Module = (function () {
         HEAP32[(buf + 24) >> 2] = stat.gid;
         HEAP32[(buf + 28) >> 2] = stat.rdev;
         HEAP32[(buf + 32) >> 2] = 0;
-        (tempI64 = [
+        tempI64 = [
           stat.size >>> 0,
-          ((tempDouble = stat.size)
-          +Math.abs(tempDouble) >= 1.0
+          (tempDouble = stat.size) + Math.abs(tempDouble) >= 1.0
             ? tempDouble > 0.0
               ? (Math.min(
                   +Math.floor(tempDouble / 4294967296.0),
@@ -5257,10 +5264,10 @@ var Module = (function () {
               : ~~+Math.ceil(
                   (tempDouble - +(~~tempDouble >>> 0)) / 4294967296.0
                 ) >>> 0
-            : 0),
-        ]);
-          (HEAP32[(buf + 40) >> 2] = tempI64[0]);
-          (HEAP32[(buf + 44) >> 2] = tempI64[1]);
+            : 0,
+        ];
+        HEAP32[(buf + 40) >> 2] = tempI64[0];
+        HEAP32[(buf + 44) >> 2] = tempI64[1];
         HEAP32[(buf + 48) >> 2] = 4096;
         HEAP32[(buf + 52) >> 2] = stat.blocks;
         HEAP32[(buf + 56) >> 2] = (stat.atime.getTime() / 1000) | 0;
@@ -5269,10 +5276,9 @@ var Module = (function () {
         HEAP32[(buf + 68) >> 2] = 0;
         HEAP32[(buf + 72) >> 2] = (stat.ctime.getTime() / 1000) | 0;
         HEAP32[(buf + 76) >> 2] = 0;
-        (tempI64 = [
+        tempI64 = [
           stat.ino >>> 0,
-          ((tempDouble = stat.ino)
-          +Math.abs(tempDouble) >= 1.0
+          (tempDouble = stat.ino) + Math.abs(tempDouble) >= 1.0
             ? tempDouble > 0.0
               ? (Math.min(
                   +Math.floor(tempDouble / 4294967296.0),
@@ -5283,10 +5289,10 @@ var Module = (function () {
               : ~~+Math.ceil(
                   (tempDouble - +(~~tempDouble >>> 0)) / 4294967296.0
                 ) >>> 0
-            : 0),
-        ]);
-          (HEAP32[(buf + 80) >> 2] = tempI64[0]);
-          (HEAP32[(buf + 84) >> 2] = tempI64[1]);
+            : 0,
+        ];
+        HEAP32[(buf + 80) >> 2] = tempI64[0];
+        HEAP32[(buf + 84) >> 2] = tempI64[1];
         return 0;
       },
       doMsync: function (addr, stream, len, flags, offset) {
@@ -5448,10 +5454,9 @@ var Module = (function () {
         }
 
         FS.llseek(stream, offset, whence);
-        (tempI64 = [
+        tempI64 = [
           stream.position >>> 0,
-          ((tempDouble = stream.position)
-          +Math.abs(tempDouble) >= 1.0
+          (tempDouble = stream.position) + Math.abs(tempDouble) >= 1.0
             ? tempDouble > 0.0
               ? (Math.min(
                   +Math.floor(tempDouble / 4294967296.0),
@@ -5462,10 +5467,10 @@ var Module = (function () {
               : ~~+Math.ceil(
                   (tempDouble - +(~~tempDouble >>> 0)) / 4294967296.0
                 ) >>> 0
-            : 0),
-        ]);
-          (HEAP32[newOffset >> 2] = tempI64[0]);
-          (HEAP32[(newOffset + 4) >> 2] = tempI64[1]);
+            : 0,
+        ];
+        HEAP32[newOffset >> 2] = tempI64[0];
+        HEAP32[(newOffset + 4) >> 2] = tempI64[1];
         if (stream.getdents && offset === 0 && whence === 0)
           stream.getdents = null; // reset readdir state
         return 0;
@@ -7011,28 +7016,20 @@ var Module = (function () {
         readyPromiseResolve(Module);
         if (Module["onRuntimeInitialized"]) Module["onRuntimeInitialized"]();
 
-        if (shouldRunNow) callMain(args);
+        callMain(args);
 
         postRun();
       }
 
-      if (Module["setStatus"]) {
-        Module["setStatus"]("Running...");
-        setTimeout(function () {
-          setTimeout(function () {
-            Module["setStatus"]("");
-          }, 1);
-          doRun();
-        }, 1);
-      } else {
-        doRun();
-      }
+      doRun();
+
       checkStackCookie();
     }
 
     Module["run"] = run;
 
-    /** @param {boolean|number=} implicit */
+    /** @param status
+     @param {boolean|number=} implicit */
     function exit(status, implicit) {
       EXITSTATUS = status;
 
@@ -7076,11 +7073,11 @@ var Module = (function () {
     }
 
     // shouldRunNow refers to calling main(), not run().
-    var shouldRunNow = true;
-
-    if (Module["noInitialRun"]) shouldRunNow = false;
-
-    run();
+    // var shouldRunNow = true;
+    //
+    // if (Module["noInitialRun"]) shouldRunNow = false;
+    //
+    // run();
 
     return Module.ready;
   };
