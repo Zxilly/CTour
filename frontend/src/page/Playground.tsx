@@ -38,6 +38,8 @@ function Playground(): JSX.Element {
 
   const [code, setCode] = useState("");
   const [article, setArticle] = useState("");
+  const [input, setInput] = useState("");
+
   const terminal = useRef(
     new Terminal({ cursorBlink: true, cursorStyle: "bar" })
   );
@@ -56,9 +58,9 @@ function Playground(): JSX.Element {
   };
 
   let rflag = false;
-  const stdout = (code: number|null) => {
-    if (code===null){
-      terminal.current.reset()
+  const stdout = (code: number | null) => {
+    if (code === null) {
+      terminal.current.reset();
     }
 
     let str = String.fromCharCode(code as number);
@@ -81,43 +83,6 @@ function Playground(): JSX.Element {
     terminal.current.write(str);
   };
 
-  // const readFunc = (
-  //   buf: Buffer | Uint8Array,
-  //   off?: number,
-  //   len?: number,
-  //   pos?: number
-  // ): number => {
-  //   return 0;
-  // };
-
-  // const writeFunc = (
-  //   buf: Buffer,
-  //   off?: number,
-  //   len?: number,
-  //   pos?: number
-  // ): number => {
-  //   if (!off) {
-  //     off = 0;
-  //   }
-  //   if (!len) {
-  //     len = buf.length;
-  //   }
-  //
-  //   // console.log(buf, off, len, pos);
-  //
-  //   let tempStr = "";
-  //   for (let i = off; i < len; i++) {
-  //     tempStr += String.fromCharCode(buf[i]);
-  //   }
-  //
-  //   tempStr = tempStr.replace("\n", "\r\n");
-  //
-  //   // console.log(tempStr);
-  //   // setTerminal((prevState) => prevState + tempStr);
-  //   terminal.current.write(tempStr);
-  //   return len;
-  // };
-
   const runCode = _.throttle((e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
@@ -128,7 +93,7 @@ function Playground(): JSX.Element {
       .then((resp) => {
         if (resp.data.success) {
           const wasmUrl = apiUrl + `/compiled/${resp.data.wasm_id}.wasm`;
-          Module(wasmUrl,stdin,stdout).then((instance: any) => {
+          Module(wasmUrl, stdin, stdout).then((instance: any) => {
             console.log(instance);
           });
         } else {
@@ -163,6 +128,28 @@ function Playground(): JSX.Element {
     term.loadAddon(fitAddon);
     term.open(document.getElementById("terminal") as HTMLElement);
     fitAddon.fit();
+
+    term.onData((e) => {
+      switch (e) {
+        case "\r": {
+          break;
+        }
+        case "\u0003": // Ctrl+C
+          break;
+        case "\u007F": // Backspace (DEL)
+          // @ts-ignore
+          if (term._core.buffer.x > 0) {
+            term.write("\b \b");
+            // @ts-ignore
+            console.log(term._core);
+          }
+          break;
+        default:
+          // Print all other characters for demo
+          term.write(e);
+          setInput((input) => e + input);
+      }
+    });
   }, []);
 
   if (!(section in infoList) || !(content in infoList[section].content)) {
