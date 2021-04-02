@@ -5,10 +5,11 @@
 #include <ctype.h>
 #include <time.h>
 
-int main(){
+int main()
+{
     int a;
     char a1;
-    scanf("%d",&a);
+    scanf("%d", &a);
     a1 = getchar();
     putchar(a1);
     printf("Available Headers\n");
