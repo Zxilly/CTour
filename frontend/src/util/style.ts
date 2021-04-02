@@ -1,6 +1,10 @@
 import { makeStyles } from "@material-ui/styles";
 
 const useStyles = makeStyles({
+  codeFont: {
+    fontFamily:
+      "'Consolas', 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace",
+  },
   submitButton: {
     paddingLeft: "16px",
     position: "relative",

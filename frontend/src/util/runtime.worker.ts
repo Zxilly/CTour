@@ -49,7 +49,10 @@ ctx.onmessage = (ev) => {
   switch (msg.type) {
     case "run": {
       Module(msg.data, stdin, stdout, stderr,onExit).then((instance) => {
-        console.log(instance);
+        // console.log(instance);
+        ctx.postMessage({
+          type:"inited",
+        })
         instance.callMain();
       });
       break;

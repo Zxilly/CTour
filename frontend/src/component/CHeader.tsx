@@ -13,9 +13,6 @@ function CHeader(): JSX.Element {
     return (
         <AppBar position="static">
             <Toolbar>
-                {/*<a>*/}
-
-                {/*</a>*/}
                 <Button onClick={goIndex} color="inherit">
                     <Typography variant="h6">
                         C Tour

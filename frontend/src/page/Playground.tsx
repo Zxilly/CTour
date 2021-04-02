@@ -9,7 +9,15 @@ import { previousContent, nextContent } from "../util/contentHandler";
 import Worker from "worker-loader!../util/runtime.worker";
 
 import { Redirect, Link, useParams } from "react-router-dom";
-import { Box, Button, Grid, Paper, Typography } from "@material-ui/core";
+import {
+  Alert,
+  Box,
+  Button,
+  Grid,
+  Paper,
+  Snackbar,
+  Typography,
+} from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 
 import AceEditor from "react-ace";
@@ -25,8 +33,13 @@ import "xterm/css/xterm.css";
 import ansiColor from "ansi-colors";
 
 import Markdown from "markdown-to-jsx";
-import _ from "lodash";
 import axios from "axios";
+import { Color as AlertColor } from "@material-ui/core/Alert";
+
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
+import Dialog from "@material-ui/core/Dialog";
 
 interface PlaygroundRouteParams {
   section: string;
@@ -40,6 +53,22 @@ function Playground(): JSX.Element {
 
   const [code, setCode] = useState("");
   const [article, setArticle] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [dialog, setDialog] = useState<{
+    status: boolean;
+    contents?: JSX.Element[];
+  }>({
+    status: false,
+  });
+  const [snackbar, setSnackbar] = useState<{
+    status: boolean;
+    type?: AlertColor;
+    msg?: string;
+  }>({
+    status: false,
+    type: "success",
+    msg: "",
+  });
 
   const terminal = useRef(
     new Terminal({ cursorBlink: true, cursorStyle: "bar" })
@@ -60,6 +89,8 @@ function Playground(): JSX.Element {
     e.preventDefault();
 
     terminal.current.reset();
+    setLoading(true);
+
     axios
       .post(apiUrl + "/compile", {
         code: code,
@@ -74,8 +105,31 @@ function Playground(): JSX.Element {
             });
           }
         } else {
-          //TODO: 编译错误提示
+          let showErrors: JSX.Element[] = [];
+          let errors = (resp.data.error as string).split("\n");
+          for (let i = 0; i < errors.length - 2; i++) {
+            showErrors.push(
+              <div className={classes.codeFont} key={i}>
+                {errors[i]
+                  .replaceAll(" ", "\u00A0")
+                  .replace(/\/tmp\/\d+.c/, "/tmp/code.c")}
+              </div>
+            );
+            console.log(errors[i]);
+          }
+          setDialog({
+            status: true,
+            contents: showErrors,
+          });
+          setLoading(false);
         }
+      })
+      .catch(() => {
+        setSnackbar({
+          status: true,
+          type: "error",
+          msg: "后端服务器失联，请联系管理员",
+        });
       });
   };
 
@@ -191,7 +245,9 @@ function Playground(): JSX.Element {
           break;
         }
         case "exit": {
-          if (msg.data===0){
+          setLoading(false);
+          term.writeln("");
+          if (msg.data === 0) {
             term.writeln(ansiColor.green.bold(`Exit with ${msg.data}`));
           } else {
             term.writeln(ansiColor.red.bold(`Exit with ${msg.data}`));
@@ -203,11 +259,52 @@ function Playground(): JSX.Element {
     workerRef.current = worker;
   }, []);
 
+  const handleClose = (event?: React.SyntheticEvent, reason?: string) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setSnackbar({ status: false });
+  };
+
   if (!(section in infoList) || !(content in infoList[section].content)) {
     return <Redirect to="/404" />;
   }
+
   return (
     <Box className={classes.container}>
+      <Dialog
+        open={dialog.status}
+        onClose={() => setDialog({ status: false })}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"编译错误"}</DialogTitle>
+        <DialogContent>
+          {/*<DialogContentText id="alert-dialog-description">*/}
+          {dialog.contents ? dialog.contents.map((e) => e) : ""}
+          {/*</DialogContentText>*/}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setDialog({ status: false })}
+            color="primary"
+            autoFocus
+          >
+            关闭
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={snackbar.status}
+        autoHideDuration={6000}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={handleClose} severity={snackbar.type}>
+          {snackbar.msg}
+        </Alert>
+      </Snackbar>
       <Grid container spacing={2} className={classes.divideBox}>
         <Grid item xs={6} className={classes.divideBox}>
           <Box className={classes.cardBox0}>
@@ -294,6 +391,7 @@ function Playground(): JSX.Element {
                   float: "right",
                   marginRight: "16px",
                 }}
+                disabled={loading}
                 onClick={runCode}
               >
                 运行
