@@ -1,7 +1,7 @@
 var Module = (function () {
   var _scriptDir = undefined;
 
-  return function (wasmUrl, stdin, stdout, stderr) {
+  return function (wasmUrl, stdin, stdout, stderr, onExit) {
     // The Module object: Our interface to the outside world. We import
     // and export values on it. There are various ways Module can be used:
     // 1. Not defined. We create it here
@@ -20,6 +20,7 @@ var Module = (function () {
     Module["stdin"] = stdin;
     Module["stdout"] = stdout;
     Module["stderr"] = stderr;
+    Module["onExit"] = onExit
 
     // Set up the promise that indicates the Module is initialized
     var readyPromiseResolve, readyPromiseReject;
@@ -4747,8 +4748,11 @@ var Module = (function () {
             for (var i = 0; i < length; i++) {
               var result;
               try {
+                // console.log(`start read at ${Date.now()}`)
                 result = input();
+                // console.log(`end read at ${Date.now()}`)
               } catch (e) {
+                console.log(e)
                 throw new FS.ErrnoError(29);
               }
               if (result === undefined && bytesRead === 0) {

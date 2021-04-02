@@ -17,13 +17,12 @@ let stdinStartPtr = 0;
 let stdinEndPtr = 0;
 
 const stdin = () => {
-  if (stdinStartPtr < stdinEndPtr) {
+  if (stdinStartPtr >= stdinEndPtr) {
+    Atomics.wait(stdinBuffer, stdinBuffer.length-1, 0);
+    stdinEndPtr=Atomics.load(stdinBuffer,stdinBuffer.length-2);
     return stdinBuffer[stdinStartPtr++];
   } else {
-    ctx.postMessage({
-      type: "waitInput",
-    });
-    Atomics.wait(stdinBuffer, stdinBuffer.length, 0);
+    return stdinBuffer[stdinStartPtr++];
   }
 };
 
@@ -35,14 +34,21 @@ const stdout = (e: number) => {
 };
 
 const stderr = () => {
-  return null;
+  return null; //TODO: Display stderr in another color.
 };
+
+const onExit = (exitCode: number) => {
+  ctx.postMessage({
+    type:"exit",
+    data:exitCode
+  })
+}
 
 ctx.onmessage = (ev) => {
   const msg = ev.data as IMsg;
   switch (msg.type) {
     case "run": {
-      Module(msg.data, stdin, stdout, stderr).then((instance) => {
+      Module(msg.data, stdin, stdout, stderr,onExit).then((instance) => {
         console.log(instance);
         instance.callMain();
       });
@@ -54,8 +60,7 @@ ctx.onmessage = (ev) => {
       break;
     }
     case "delete": {
-      stdinBuffer[stdinEndPtr] = 0;
-      stdinEndPtr--;
+      stdinEndPtr=Atomics.load(stdinBuffer,stdinBuffer.length-2);
       break;
     }
   }

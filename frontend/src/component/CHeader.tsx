@@ -7,7 +7,7 @@ function CHeader(): JSX.Element {
 
     function goIndex(e: React.MouseEvent<HTMLButtonElement>) {
         e.preventDefault();
-        history.push('/');
+        history.push('/catalogue');
     }
 
     return (

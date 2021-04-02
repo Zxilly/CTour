@@ -22,6 +22,8 @@ import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 
+import ansiColor from "ansi-colors";
+
 import Markdown from "markdown-to-jsx";
 import _ from "lodash";
 import axios from "axios";
@@ -107,7 +109,7 @@ function Playground(): JSX.Element {
 
     const worker = new Worker();
 
-    const mem = new SharedArrayBuffer(4100);
+    const mem = new SharedArrayBuffer(4104);
     const stdinBuffer = new Int32Array(mem);
     let stdinPtr = 0;
 
@@ -117,8 +119,8 @@ function Playground(): JSX.Element {
     });
 
     const wakeupWorker = () => {
-      Atomics.store(stdinBuffer, stdinBuffer.length, 1);
-      Atomics.notify(stdinBuffer, stdinBuffer.length);
+      Atomics.store(stdinBuffer, stdinBuffer.length - 1, 1);
+      Atomics.notify(stdinBuffer, stdinBuffer.length - 1);
     };
 
     term.onData((e) => {
@@ -127,6 +129,8 @@ function Playground(): JSX.Element {
           term.write("\r\n");
           stdinBuffer[stdinPtr] = e.charCodeAt(0);
           stdinPtr++;
+          Atomics.store(stdinBuffer, stdinBuffer.length - 1, stdinPtr);
+          wakeupWorker();
           break;
         }
         case "\u0003": // Ctrl+C
@@ -139,6 +143,7 @@ function Playground(): JSX.Element {
             // console.log(term._core);
             stdinBuffer[stdinPtr] = 0;
             stdinPtr--;
+            Atomics.store(stdinBuffer, stdinBuffer.length - 1, stdinPtr);
             worker.postMessage({
               type: "delete",
             });
@@ -179,11 +184,18 @@ function Playground(): JSX.Element {
     };
 
     worker.onmessage = (ev) => {
-      let msgType = ev.data.type;
-      switch (msgType) {
+      let msg: { type: string; data: any } = ev.data;
+      switch (msg.type) {
         case "stdout": {
-          stdout(ev.data.data);
+          stdout(msg.data);
           break;
+        }
+        case "exit": {
+          if (msg.data===0){
+            term.writeln(ansiColor.green.bold(`Exit with ${msg.data}`));
+          } else {
+            term.writeln(ansiColor.red.bold(`Exit with ${msg.data}`));
+          }
         }
       }
     };
