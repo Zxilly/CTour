@@ -11,12 +11,20 @@ interface IMsg {
   data: any;
 }
 
-let stdinBuffer: string;
-let stdoutBuffer: string;
-let stderrBuffer: string;
+let mem: SharedArrayBuffer;
+let stdinBuffer: Int32Array;
+let stdinStartPtr = 0;
+let stdinEndPtr = 0;
 
 const stdin = () => {
-  return null;
+  if (stdinStartPtr < stdinEndPtr) {
+    return stdinBuffer[stdinStartPtr++];
+  } else {
+    ctx.postMessage({
+      type: "waitInput",
+    });
+    Atomics.wait(stdinBuffer, stdinBuffer.length, 0);
+  }
 };
 
 const stdout = (e: number) => {
@@ -36,8 +44,19 @@ ctx.onmessage = (ev) => {
     case "run": {
       Module(msg.data, stdin, stdout, stderr).then((instance) => {
         console.log(instance);
-        instance.callMain()
+        instance.callMain();
       });
+      break;
+    }
+    case "memInit": {
+      mem = msg.data;
+      stdinBuffer = new Int32Array(mem);
+      break;
+    }
+    case "delete": {
+      stdinBuffer[stdinEndPtr] = 0;
+      stdinEndPtr--;
+      break;
     }
   }
 };

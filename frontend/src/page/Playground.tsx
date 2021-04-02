@@ -38,7 +38,6 @@ function Playground(): JSX.Element {
 
   const [code, setCode] = useState("");
   const [article, setArticle] = useState("");
-  const [input, setInput] = useState("");
 
   const terminal = useRef(
     new Terminal({ cursorBlink: true, cursorStyle: "bar" })
@@ -106,9 +105,28 @@ function Playground(): JSX.Element {
     term.open(document.getElementById("terminal") as HTMLElement);
     fitAddon.fit();
 
+    const worker = new Worker();
+
+    const mem = new SharedArrayBuffer(4100);
+    const stdinBuffer = new Int32Array(mem);
+    let stdinPtr = 0;
+
+    worker.postMessage({
+      type: "memInit",
+      data: mem,
+    });
+
+    const wakeupWorker = () => {
+      Atomics.store(stdinBuffer, stdinBuffer.length, 1);
+      Atomics.notify(stdinBuffer, stdinBuffer.length);
+    };
+
     term.onData((e) => {
       switch (e) {
         case "\r": {
+          term.write("\r\n");
+          stdinBuffer[stdinPtr] = e.charCodeAt(0);
+          stdinPtr++;
           break;
         }
         case "\u0003": // Ctrl+C
@@ -117,19 +135,22 @@ function Playground(): JSX.Element {
           // @ts-ignore
           if (term._core.buffer.x > 0) {
             term.write("\b \b");
-            // @ts-ignore
-            console.log(term._core);
+            // // @ts-ignore
+            // console.log(term._core);
+            stdinBuffer[stdinPtr] = 0;
+            stdinPtr--;
+            worker.postMessage({
+              type: "delete",
+            });
           }
-          setInput((str) => str.substring(0, str.length - 2));
           break;
         default:
-          // Print all other characters for demo
           term.write(e);
-          setInput((input) => e + input);
+          stdinBuffer[stdinPtr] = e.charCodeAt(0);
+          console.log(stdinBuffer);
+          stdinPtr++;
       }
     });
-
-    const worker = new Worker();
 
     let rflag = false;
     const stdout = (keyCode: number) => {
