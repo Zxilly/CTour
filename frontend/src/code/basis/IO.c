@@ -3,25 +3,22 @@
 int main(void)
 {
    char c;
-   printf("请输入一个字符:");
+   printf("Input a char:");
    getchar();
    putchar(c);
    printf("\n");
 
    int a;
-   printf("请输入一个数值:");
+   printf("Input a integer number:");
    scanf("%d", &a);
    printf("%d\n", a);
 
    double b;
-   printf("请输入一个带小数的数值:");
+   printf("Input a float number:");
    scanf("%lf", &b);
    printf("%lf\n", b);
 
-   printf("请输入一串字符:");
+   printf("Input a string:");
    getchar();
-   char str[1024] = {};
-   gets(str);
-   puts(str);
    printf("\n");
 }
