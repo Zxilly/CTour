@@ -43,4 +43,4 @@ jobs:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "${{ steps.current-time.outputs.formattedTime }}"
         prerelease: true
-        files: build.tar.gz
+        files: frontend/build.tar.gz
