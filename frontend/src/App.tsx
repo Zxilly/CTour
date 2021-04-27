@@ -1,28 +1,35 @@
-import React from 'react';
+import React from "react";
 import {
     BrowserRouter as Router,
     Switch,
     Route,
-    Redirect
+    Redirect,
 } from "react-router-dom";
-import './App.css'
-import CssBaseline from '@material-ui/core/CssBaseline';
+import "./App.css";
+import CssBaseline from "@material-ui/core/CssBaseline";
 
 import Index from "./page/Index";
 import CHeader from "./component/CHeader";
 import Catalogue from "./page/Catalogue";
-import {createMuiTheme, ThemeProvider} from '@material-ui/core/styles';
+import {createMuiTheme, ThemeProvider} from "@material-ui/core/styles";
 import Playground from "./page/Playground";
 
-export const apiUrl = "http://localhost:8000"
+let apiUrl;
+
+if (process.env.NODE_ENV === "production") {
+    apiUrl = "https://api.cpplearner.top/";
+} else {
+    apiUrl = "http://localhost:8000";
+}
+export {apiUrl};
 
 const theme = createMuiTheme({
     palette: {
         primary: {
-            main: '#00838f',
+            main: "#00838f",
         },
         secondary: {
-            main: '#039be5',
+            main: "#039be5",
         },
     },
 });
@@ -43,9 +50,7 @@ function App() {
                     <Route path="/playground/:section/:content">
                         <Playground/>
                     </Route>
-                    <Route path="/404">
-
-                    </Route>
+                    <Route path="/404"></Route>
                     <Route path="*">
                         <Redirect to="/404"/>
                     </Route>
