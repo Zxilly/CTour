@@ -14,7 +14,7 @@ import Catalogue from "./page/Catalogue";
 import {createMuiTheme, ThemeProvider} from "@material-ui/core/styles";
 import Playground from "./page/Playground";
 
-let apiUrl;
+let apiUrl:string;
 
 if (process.env.NODE_ENV === "production") {
     apiUrl = "https://api.cpplearner.top/";
@@ -50,7 +50,7 @@ function App() {
                     <Route path="/playground/:section/:content">
                         <Playground/>
                     </Route>
-                    <Route path="/404"></Route>
+                    <Route path="/404"/>
                     <Route path="*">
                         <Redirect to="/404"/>
                     </Route>
