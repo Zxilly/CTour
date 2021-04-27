@@ -17,7 +17,7 @@ import Playground from "./page/Playground";
 let apiUrl:string;
 
 if (process.env.NODE_ENV === "production") {
-    apiUrl = "https://api.cpplearner.top/";
+    apiUrl = "https://api.cpplearner.top";
 } else {
     apiUrl = "http://localhost:8000";
 }
