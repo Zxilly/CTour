@@ -32,9 +32,6 @@ jobs:
     - name: Build 
       run: yarn run build
     
-    - name: SSH connection to Actions
-      uses: csexton/debugger-action@master
-    
     - name: Bundle
       run: tar zcf build.tar.gz -C build/ .
       
