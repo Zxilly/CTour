@@ -1,26 +1,24 @@
 import React from "react";
-import {AppBar, Button, Toolbar, Typography} from "@material-ui/core";
-import {useHistory} from "react-router-dom";
+import {AppBar, Button, Toolbar, Typography} from "@mui/material";
+import {useNavigate} from "react-router-dom";
 
 function CHeader(): JSX.Element {
-    const history = useHistory();
+    const navigate = useNavigate();
 
     function goIndex(e: React.MouseEvent<HTMLButtonElement>) {
         e.preventDefault();
-        history.push('/catalogue');
+        navigate("/catalogue");
     }
 
     return (
         <AppBar position="static">
             <Toolbar>
                 <Button onClick={goIndex} color="inherit">
-                    <Typography variant="h6">
-                        C Tour
-                    </Typography>
+                    <Typography variant="h6">C Tour</Typography>
                 </Button>
             </Toolbar>
         </AppBar>
-    )
+    );
 }
 
 export default CHeader

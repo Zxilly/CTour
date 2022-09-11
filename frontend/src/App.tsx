@@ -1,17 +1,16 @@
 import React from "react";
 import {
     BrowserRouter as Router,
-    Switch,
     Route,
-    Redirect,
+    Routes
 } from "react-router-dom";
 import "./App.css";
-import CssBaseline from "@material-ui/core/CssBaseline";
+import CssBaseline from "@mui/material/CssBaseline";
 
 import Index from "./page/Index";
 import CHeader from "./component/CHeader";
 import Catalogue from "./page/Catalogue";
-import {createMuiTheme, ThemeProvider} from "@material-ui/core/styles";
+import {createTheme, ThemeProvider} from "@mui/material/styles";
 import Playground from "./page/Playground";
 
 let apiUrl:string;
@@ -23,7 +22,7 @@ if (process.env.NODE_ENV === "production") {
 }
 export {apiUrl};
 
-const theme = createMuiTheme({
+const theme = createTheme({
     palette: {
         primary: {
             main: "#00838f",
@@ -40,21 +39,13 @@ function App() {
             <Router>
                 <CssBaseline/>
                 <CHeader/>
-                <Switch>
-                    <Route exact path="/catalogue">
-                        <Catalogue/>
-                    </Route>
-                    <Route exact path="/">
-                        <Index/>
-                    </Route>
-                    <Route path="/playground/:section/:content">
-                        <Playground/>
-                    </Route>
+                <Routes>
+                    <Route path="/catalogue" element={<Catalogue/>}/>
+                    <Route path="/" element={<Index/>}/>
+                    <Route path="/playground/:section/:content" element={<Playground/>}/>
                     <Route path="/404"/>
-                    <Route path="*">
-                        <Redirect to="/404"/>
-                    </Route>
-                </Switch>
+                    <Route path="*"/>
+                </Routes>
             </Router>
         </ThemeProvider>
     );

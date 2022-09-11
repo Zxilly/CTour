@@ -1,22 +1,14 @@
-import { Button } from "@material-ui/core";
+import { Button } from "@mui/material";
 import React from "react";
-import { useHistory } from "react-router-dom";
-import { makeStyles } from "@material-ui/styles";
+import { useNavigate } from "react-router-dom";
 
 interface CPresentationButtonProps {
   section: string;
   item: [string, { hasCode: boolean; title: string }];
 }
 
-const useStyle = makeStyles({
-  button: {
-    margin: "8px",
-  },
-});
-
 function CPresentationButton(props: CPresentationButtonProps): JSX.Element {
-  const history = useHistory();
-  const theme = useStyle();
+  const navigate = useNavigate();
 
   const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -24,7 +16,7 @@ function CPresentationButton(props: CPresentationButtonProps): JSX.Element {
     const section = props.section;
     const presentation = props.item[0];
 
-    history.push(`/playground/${section}/${presentation}`);
+    navigate(`/playground/${section}/${presentation}`);
   };
 
   return (
@@ -32,7 +24,7 @@ function CPresentationButton(props: CPresentationButtonProps): JSX.Element {
       onClick={handleButtonClick}
       color="secondary"
       variant="outlined"
-      className={theme.button}
+      style={{ margin: "8px" }}
     >
       {props.item[1].title}
     </Button>

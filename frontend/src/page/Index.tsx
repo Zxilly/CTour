@@ -1,25 +1,22 @@
-import {Button, Container, Typography} from "@material-ui/core";
-import {useHistory} from 'react-router-dom'
+import {Button, Container, Typography} from "@mui/material";
+import {useNavigate} from 'react-router-dom'
 import React from "react";
-
-import useStyles from "../util/style";
 
 
 function Index(): JSX.Element {
-    const classes = useStyles();
-    const history = useHistory();
+    const navigate = useNavigate();
 
     function goCatalogue(e: React.MouseEvent<HTMLButtonElement>): void {
         e.preventDefault();
-        history.push('/catalogue');
+        navigate('/catalogue');
     }
 
     return (
         <Container>
-            <Typography variant="h1" className={classes.indexTitle}>
+            <Typography variant="h1" className={"indexTitle"}>
                 C TOUR
             </Typography>
-            <Typography variant="h5" className={classes.content} style={{marginTop: "40px"}}>
+            <Typography variant="h5" className={"content"} style={{marginTop: "40px"}}>
                 学习 C 语言的第一步
             </Typography>
             <p style={{width: "100%"}}>
@@ -28,7 +25,7 @@ function Index(): JSX.Element {
                     color="primary"
                     disableElevation
                     style={{marginTop: "40px"}}
-                    className={classes.content}
+                    className={"content"}
                     onClick={goCatalogue}
                 >
                     访问目录

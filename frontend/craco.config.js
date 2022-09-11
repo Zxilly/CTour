@@ -8,6 +8,12 @@ module.exports = {
       options: { test: /\.(c|md)$/i },
     },
   ],
+  devServer: {
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+  },
   webpack: {
     configure: function (webpackConfig) {
       const workerLoader = {

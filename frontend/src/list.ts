@@ -163,7 +163,7 @@ const infoList:list = {
         hasCode: true,
       },
       end: {
-        title: "第三章结束",
+        title: "第四章结束",
         hasCode: false,
       },
     },
