@@ -33,7 +33,7 @@ jobs:
       run: yarn run build
 
     - name: Bundle
-      run: tar zcf build.tar.gz -C build/ .
+      run: tar zcf build.tar.gz -C dist/ .
 
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
