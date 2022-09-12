@@ -5,12 +5,17 @@ import uuid
 import uvicorn
 from fastapi import FastAPI, Path, Body
 from starlette.exceptions import HTTPException
-from starlette.responses import Response, FileResponse
+from starlette.responses import FileResponse
 
 app = FastAPI()
 
 
 # emcc = '/home/zxilly/wasi-sdk-12.0/bin/clang'
+
+safe_header = {
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "require-corp",
+}
 
 
 @app.post('/compile')
@@ -75,7 +80,7 @@ async def emcc_compiled(
     if not os.path.exists(out):
         raise HTTPException(404, 'File not found.')
     else:
-        return FileResponse(out, media_type='application/wasm')
+        return FileResponse(out, media_type='application/wasm', headers=safe_header)
 
 
 @app.get('/{path:path}')
@@ -83,9 +88,9 @@ async def root(path: str):
     print("triggerd")
     path = "./dist/" + path
     if os.path.isfile(path):
-        return FileResponse(path)
+        return FileResponse(path, headers=safe_header)
     else:
-        return FileResponse("./dist/index.html")
+        return FileResponse("./dist/index.html", headers=safe_header)
 
 
 if __name__ == '__main__':

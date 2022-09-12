@@ -46,7 +46,7 @@ RUN echo "## Aggressive optimization: Remove debug symbols" \
     && find ${EMSDK}/upstream/bin -type f -exec strip -s {} + || true \
     && echo "## Done"
 
-FROM node:18 as frontend_build
+FROM node:18 as stage_frontend_build
 WORKDIR /app
 COPY frontend .
 RUN yarn install && yarn build
@@ -57,7 +57,7 @@ WORKDIR /app
 
 COPY --from=stage_emsdk_build /emsdk /emsdk
 COPY backend /app
-COPY --from=frontend_build /app/build /app/dist
+COPY --from=stage_frontend_build /app/dist /app/dist
 
 EXPOSE 26546
 
@@ -98,7 +98,6 @@ RUN echo "## Update and install packages" \
         build-essential \
         make \
         ant \
-        libidn11 \
         cmake \
     # Standard Cleanup on Debian images
     && apt-get -y clean \
@@ -114,4 +113,4 @@ RUN echo "## Update and install packages" \
 
 RUN pip install -r requirements.txt
 
-CMD python main.py
+CMD python3 main.py
