@@ -10,31 +10,31 @@ jobs:
      run:
       shell: bash
       working-directory: frontend
-    
+
     runs-on: ubuntu-latest
 
-    steps:  
+    steps:
     - name: Get current time
       uses: 1466587594/get-current-time@v2
       id: current-time
       with:
         format: YYYYMMDDTHHmmss
         utcOffset: "+08:00"
-    
+
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
       with:
-        node-version: 15.x
+        node-version: 18
     - name: Install Dependency
       run: yarn install
-      
-    - name: Build 
+
+    - name: Build
       run: yarn run build
-    
+
     - name: Bundle
       run: tar zcf build.tar.gz -C build/ .
-      
+
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
