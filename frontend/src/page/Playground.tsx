@@ -4,8 +4,8 @@ import "./PlayGround.css";
 import { apiUrl } from "../App";
 import { nextContent, previousContent } from "../util/contentHandler";
 
-/* eslint-disable-next-line import/no-webpack-loader-syntax */
-import Worker from "worker-loader!../util/runtime.worker";
+// @ts-ignore
+import Worker from "../util/runtime.worker.ts?worker";
 
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import {
@@ -21,7 +21,7 @@ import {
 import React, { Fragment, useEffect, useRef, useState } from "react";
 
 import AceEditor from "react-ace";
-import "ace-builds/webpack-resolver";
+
 import "ace-builds/src-noconflict/mode-c_cpp";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
@@ -145,12 +145,12 @@ function Playground(): JSX.Element {
       return;
     }
 
-    import(`../document/${section}/${content}.md`).then((article) => {
-      fetchContent(article.default, setArticle);
+    import(`../document/${section}/${content}.md?raw`).then((article) => {
+      setArticle(article.default);
     });
     if (infoList[section].content[content].hasCode) {
-      import(`../code/${section}/${content}.c`).then((code) => {
-        fetchContent(code.default, setCode);
+      import(`../code/${section}/${content}.c?raw`).then((code) => {
+        setCode(code.default);
       });
     } else {
       setCode("");
@@ -244,7 +244,7 @@ function Playground(): JSX.Element {
       terminal.current?.write(str);
     };
 
-    worker.onmessage = (ev) => {
+    worker.onmessage = (ev: MessageEvent) => {
       let msg: { type: string; data: any } = ev.data;
       switch (msg.type) {
         case "stdout": {

@@ -1,6 +1,6 @@
 import React from "react";
 import {
-    BrowserRouter as Router,
+    BrowserRouter as Router, Navigate,
     Route,
     Routes
 } from "react-router-dom";
@@ -16,7 +16,7 @@ import Playground from "./page/Playground";
 let apiUrl:string;
 
 if (process.env.NODE_ENV === "production") {
-    apiUrl = "https://api.cpplearner.top";
+    apiUrl = "";
 } else {
     apiUrl = "http://localhost:8000";
 }
@@ -43,8 +43,8 @@ function App() {
                     <Route path="/catalogue" element={<Catalogue/>}/>
                     <Route path="/" element={<Index/>}/>
                     <Route path="/playground/:section/:content" element={<Playground/>}/>
-                    <Route path="/404"/>
-                    <Route path="*"/>
+                    <Route path="/404" element={<h1>404 Not Found</h1>}/>
+                    <Route path="*" element={<Navigate to={"/404"} replace/>}/>
                 </Routes>
             </Router>
         </ThemeProvider>

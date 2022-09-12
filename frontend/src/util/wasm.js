@@ -1,3 +1,5 @@
+// noinspection
+
 var Module = (function () {
   var _scriptDir = undefined;
 
@@ -7090,3 +7092,4 @@ var Module = (function () {
 if (typeof exports === "object" && typeof module === "object")
   module.exports = Module;
 else if (typeof exports === "object") exports["Module"] = Module;
+export default Module;

@@ -8,7 +8,7 @@ function Index(): JSX.Element {
 
     function goCatalogue(e: React.MouseEvent<HTMLButtonElement>): void {
         e.preventDefault();
-        navigate('/catalogue');
+        navigate('catalogue');
     }
 
     return (
