@@ -96,7 +96,7 @@ function Playground(): JSX.Element {
         if (resp.data.success) {
           const wasmUrl = apiUrl + `/compiled/${resp.data.wasm_id}.wasm`;
           if (workerRef.current) {
-            workerRef.current.postMessage({
+            workerRef.current?.postMessage({
               type: "run",
               data: wasmUrl,
             });
@@ -162,7 +162,7 @@ function Playground(): JSX.Element {
   useEffect(() => {
     const worker = new Worker();
 
-    const mem = new SharedArrayBuffer(20 * 1024 * 1024);
+    const mem = new SharedArrayBuffer(1);
     const stdinBuffer = new Int32Array(mem);
     let stdinPtr = 0;
 
@@ -172,12 +172,15 @@ function Playground(): JSX.Element {
     });
 
     const wakeupWorker = () => {
-      Atomics.store(stdinBuffer, stdinBuffer.length - 1, 1);
-      Atomics.notify(stdinBuffer, stdinBuffer.length - 1);
+      Atomics.notify(stdinBuffer, 0);
     };
 
     if (terminal.current === undefined) {
-      const term = new Terminal({ cursorBlink: true, cursorStyle: "bar" });
+      const term = new Terminal({
+        cursorBlink: true,
+        cursorStyle: "bar",
+        convertEol: true,
+      });
       const fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
       term.open(document.getElementById("terminal") as HTMLElement);
@@ -189,8 +192,6 @@ function Playground(): JSX.Element {
         switch (e) {
           case "\r": {
             term.write("\r\n");
-            stdinBuffer[stdinPtr] = e.charCodeAt(0);
-            stdinPtr++;
             Atomics.store(stdinBuffer, stdinBuffer.length - 1, stdinPtr);
             wakeupWorker();
             break;
@@ -204,9 +205,7 @@ function Playground(): JSX.Element {
               stdinBuffer[stdinPtr] = 0;
               stdinPtr--;
               Atomics.store(stdinBuffer, stdinBuffer.length - 1, stdinPtr);
-              worker.postMessage({
-                type: "delete",
-              });
+
             }
             break;
           default:

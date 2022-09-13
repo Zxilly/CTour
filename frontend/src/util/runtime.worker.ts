@@ -1,6 +1,6 @@
-import Module from "./wasm";
-
 /* eslint-disable-next-line no-restricted-globals */
+import {runWithModule} from "./wasm";
+
 const ctx: Worker = self as any;
 
 // Post data to parent thread
@@ -12,21 +12,20 @@ interface IMsg {
 }
 
 let mem: SharedArrayBuffer;
-let stdinBuffer: Int32Array;
-let stdinStartPtr = 0;
-let stdinEndPtr = 0;
+let inputLock: Int32Array;
+
 
 const stdin = () => {
   if (stdinStartPtr >= stdinEndPtr) {
-    Atomics.wait(stdinBuffer, stdinBuffer.length-1, 0);
-    stdinEndPtr=Atomics.load(stdinBuffer,stdinBuffer.length-2);
-    return stdinBuffer[stdinStartPtr++];
+    Atomics.wait(inputLock, inputLock.length - 1, 0);
+    stdinEndPtr = Atomics.load(inputLock, inputLock.length - 2);
+    return inputLock[stdinStartPtr++];
   } else {
-    return stdinBuffer[stdinStartPtr++];
+    return inputLock[stdinStartPtr++];
   }
 };
 
-const stdout = (e: number) => {
+const stdout = (e: any) => {
   ctx.postMessage({
     type: "stdout",
     data: e,
@@ -39,30 +38,24 @@ const stderr = () => {
 
 const onExit = (exitCode: number) => {
   ctx.postMessage({
-    type:"exit",
-    data:exitCode
-  })
-}
+    type: "exit",
+    data: exitCode,
+  });
+};
 
 ctx.onmessage = (ev) => {
   const msg = ev.data as IMsg;
   switch (msg.type) {
     case "run": {
-      Module(msg.data, stdin, stdout, stderr,onExit).then((instance) => {
-        ctx.postMessage({
-          type:"inited",
-        })
-        instance.callMain();
-      });
+      const url = msg.data.url;
+      runWithModule({
+
+      })
       break;
     }
     case "memInit": {
       mem = msg.data;
-      stdinBuffer = new Int32Array(mem);
-      break;
-    }
-    case "delete": {
-      stdinEndPtr=Atomics.load(stdinBuffer,stdinBuffer.length-2);
+      inputLock = new Int32Array(mem);
       break;
     }
   }
